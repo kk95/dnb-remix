@@ -1,0 +1,35 @@
+# Audio/video files (large binaries)
+*.wav
+*.mp3
+*.flac
+*.aif
+*.aiff
+*.mp4
+*.mkv
+*.avi
+
+# Stems (demucs output)
+stems/
+
+# Output renders
+output/
+
+# Reference recordings
+reference/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Environment & secrets
+.env*
+.mcp.json
+
+# System
+.DS_Store
+
+# Claude local files
+.claude/settings.local.json
+CLAUDE.local.md
+todos/
