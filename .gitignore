@@ -1,6 +1,9 @@
 # Audio/video files (large binaries)
 *.wav
 *.mp3
+
+# Allow curated samples for README
+!samples/*.mp3
 *.flac
 *.aif
 *.aiff
