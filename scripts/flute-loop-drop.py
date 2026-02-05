@@ -43,7 +43,7 @@ SAATHIYA_BAR_S = 4 * (60.0 / SAATHIYA_LOCAL_BPM)
 # Loop config
 LOOP_BARS = 4
 N_FLUTE_LOOPS = 6  # ~65s of looped flute
-CROSSFADE_BEATS = 1  # 1-beat crossfade — flute tail is already near-silent, just smooth the seam
+EDGE_FADE_MS = 3   # 3ms micro-fade at loop edges — prevents clicks, zero overlap
 
 os.makedirs(OUTPUT, exist_ok=True)
 
@@ -176,10 +176,17 @@ BASS_DRIVE = 6
 print(f"  Distorting bass (drive={BASS_DRIVE}, clean sub <80Hz)...")
 kg_bass_loop = distort_bass(kg_bass_loop, drive=BASS_DRIVE)
 
-# Loop KG drums+bass
-xf_samples = int(CROSSFADE_BEATS * BEAT_S * SR)
-kg_drums_looped = make_loop(kg_drums_loop, N_FLUTE_LOOPS, xf_samples)
-kg_bass_looped = make_loop(kg_bass_loop, N_FLUTE_LOOPS, xf_samples)
+# Loop KG drums+bass — micro-fade edges then tile (zero overlap)
+edge_fade = int(EDGE_FADE_MS / 1000 * SR)
+fade_in = np.linspace(0, 1, edge_fade)[:, np.newaxis]
+fade_out = np.linspace(1, 0, edge_fade)[:, np.newaxis]
+
+for loop in [kg_drums_loop, kg_bass_loop]:
+    loop[:edge_fade] *= fade_in
+    loop[-edge_fade:] *= fade_out
+
+kg_drums_looped = np.tile(kg_drums_loop, (N_FLUTE_LOOPS, 1))
+kg_bass_looped = np.tile(kg_bass_loop, (N_FLUTE_LOOPS, 1))
 print(f"  KG looped: {len(kg_drums_looped)/SR:.1f}s")
 
 
@@ -203,9 +210,11 @@ if len(flute_loop) < target_loop_samples:
     pad = np.zeros((target_loop_samples - len(flute_loop), 2))
     flute_loop = np.vstack([flute_loop, pad])
 
-# Loop flute with same crossfade — natural tail-off blends into riff restart
-flute_looped = make_loop(flute_loop, N_FLUTE_LOOPS, xf_samples)
-print(f"  Flute looped: {len(flute_looped)/SR:.1f}s ({N_FLUTE_LOOPS}x, {CROSSFADE_BEATS}-beat crossfade)")
+# Loop flute — micro-fade edges then tile (zero overlap, full phrase intact)
+flute_loop[:edge_fade] *= fade_in
+flute_loop[-edge_fade:] *= fade_out
+flute_looped = np.tile(flute_loop, (N_FLUTE_LOOPS, 1))
+print(f"  Flute looped: {len(flute_looped)/SR:.1f}s ({N_FLUTE_LOOPS}x, zero overlap)")
 
 
 # ── Step 4: Build the 1-minute remix ─────────────────────────────────
