@@ -222,18 +222,15 @@ print(f"  Flute looped: {len(flute_looped)/SR:.1f}s ({N_FLUTE_LOOPS}x, zero over
 log("Step 4: Build 1-minute dreamy remix")
 
 # Structure:
-# - 8s pre-context: pure Saathiya
-# - 4 bars buildup: KG fades in muffled under Saathiya
-# - Snap/transition: 2-bar smooth crossover from Saathiya to loop world
+# - Last vocal sentence (~3 bars before drop, muffled KG already building)
+# - DROP at BEAT_GRID_S: KG + flute snap in
 # - Loop section: flute loop + KG drum/bass loop for ~60s
-#
-# The "loop world" starts at SNAP_S. Total ~75s clip.
 
 loop_duration_s = len(flute_looped) / SR
-pre_context_s = 8
 buildup_bars = 4
 buildup_start = BEAT_GRID_S - buildup_bars * BAR_S
-clip_start = max(0, buildup_start - pre_context_s)
+# Start at 3 bars before drop — catches the last vocal phrase
+clip_start = BEAT_GRID_S - 3 * BAR_S
 clip_end_s = BEAT_GRID_S + loop_duration_s + 4.0  # 4s fadeout tail
 clip_samples = int((clip_end_s - clip_start) * SR)
 cs = int(clip_start * SR)
