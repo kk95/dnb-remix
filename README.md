@@ -181,3 +181,23 @@ HANDOFF.md                            # Session handoff document
 - **[Demucs](https://github.com/facebookresearch/demucs)** (htdemucs_ft) — source separation
 - **ffmpeg** — audio format conversion
 - **My ears** — quality control
+
+## Credits & Disclaimer
+
+This is a **non-commercial, educational remix** made to explore AI-assisted audio engineering. No profit is made from this project.
+
+### Original Tracks
+
+**"Saathiya"** from the film *Saathiya* (2002)
+
+- Composed by **A.R. Rahman**
+- Sung by **Sonu Nigam**
+- Lyrics by **Gulzar**
+- Film produced by **Yash Raj Films**
+
+**"Kho Gayi (kSaya Rework)"** (2023)
+
+- Artists: **kSaya, Frntflw, Scansion & Sihie**
+- Composers: **Shantanu Manik Gursal, Mayank Vidhani, Tushar Mulchandani, Ritesh Prajapati, B Sonakshi Rao & Nimit Naik**
+
+All rights to the original compositions, recordings, and performances belong to their respective owners. This remix is a personal creative project for learning purposes only and is not intended for distribution, sale, or commercial use. If any rights holder has concerns, please open an issue and I will promptly address it.
