@@ -16,7 +16,7 @@ Full-section KG drums (no loop restarts), 134ms circular crossfade on the flute,
 
 Spotify has a beta feature that auto-mixes songs in a playlist — beat-syncing transitions between tracks. I had Saathiya and Kho Gayi back to back, and the transition it created was magic: Saathiya's dreamy flute ending flowing straight into Kho Gayi's beat drop.
 
-I screen-recorded the transition in [djay](https://www.algoriddim.com/djay-app) to study it more closely — the settings, the overlap, the beat alignment. Then I wondered: **can I turn this into an actual produced remix using nothing but prompts?**
+I screen-recorded the transition in spotify to study it more closely — the settings, the overlap, the beat alignment. Then I wondered: **can I turn this into an actual produced remix using nothing but prompts?**
 
 I don't use a DAW. I haven't touched Python in over a decade. But I had Claude Code and a pair of headphones.
 
