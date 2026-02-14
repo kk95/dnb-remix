@@ -66,6 +66,8 @@ But this revealed a hidden bug: KG's **post-drop BPM is 95.0, not the global 95.
 
 Built a [Gradio tuner](scripts/ding-tuner.py) for interactive parameter adjustment — flute source position, crossfade duration, volume, KG mode toggle. The final settings: flute at 0.57 volume (down from 0.70 to let drums breathe), 134ms circular crossfade.
 
+![Gradio DnB Remix Tuner](docs/images/gradio-tuner.png)
+
 **The final track:** [Listen](https://kk95.github.io/dnb-remix/docs/)
 
 ## How Vibe Coding Works
