@@ -2,10 +2,10 @@
 """
 1-minute dreamy flute + DnB remix.
 
-4-bar flute loop (Saathiya "other") + 4-bar KG drums+bass loop,
-both time-stretched to exact 88.0 BPM so they stay locked together.
+Full-section KG drums+bass (no looping, no restarts) + 4-bar flute loop
+(Saathiya "other" from 290.4s), both time-stretched to 88.0 BPM.
 
-Smooth transition from Saathiya into the loop section (no jarring snap).
+Smooth transition from Saathiya into the drop section.
 """
 
 import os
@@ -22,9 +22,11 @@ OUTPUT = f"{PROJECT}/output/constant-stretch"
 SR = 44100
 
 # BPM values
-KG_BPM = 95.703
+KG_BPM = 95.703                # global KG BPM (used for 4-bar ding loop)
+KG_FULL_SECTION_BPM = 95.0    # actual BPM of KG post-drop section (33-93s)
 TARGET_BPM = 88.0
 STRETCH_RATE = TARGET_BPM / KG_BPM
+FULL_STRETCH_RATE = TARGET_BPM / KG_FULL_SECTION_BPM
 
 # Alignment
 KG_DROP_S = 33.245
@@ -42,8 +44,10 @@ SAATHIYA_BAR_S = 4 * (60.0 / SAATHIYA_LOCAL_BPM)
 
 # Loop config
 LOOP_BARS = 4
-N_FLUTE_LOOPS = 6  # ~65s of looped flute
-EDGE_FADE_MS = 3   # 3ms micro-fade at loop edges — prevents clicks, zero overlap
+N_FLUTE_LOOPS = 6
+EDGE_FADE_MS = 3
+FLUTE_XF_MS = 134       # circular crossfade at flute loop boundaries
+FLUTE_SOURCE_S = 290.4   # best loop boundary (from riff instance scan)
 
 os.makedirs(OUTPUT, exist_ok=True)
 
@@ -83,7 +87,6 @@ def to_mp3(wav_path):
 
 def distort_bass(audio, drive=6, sub_cutoff=80):
     """Tanh saturation on mids/highs, clean sub preserved."""
-    # Split into sub (<80Hz) and mids/highs
     sos_lo = butter(4, sub_cutoff / (SR / 2), btype='low', output='sos')
     sos_hi = butter(4, sub_cutoff / (SR / 2), btype='high', output='sos')
 
@@ -91,44 +94,32 @@ def distort_bass(audio, drive=6, sub_cutoff=80):
     for ch in range(audio.shape[1]):
         sub = sosfilt(sos_lo, audio[:, ch])
         mids = sosfilt(sos_hi, audio[:, ch])
-        # Saturate mids/highs
         mids_dist = np.tanh(drive * mids) / np.tanh(drive)
         result[:, ch] = sub + mids_dist
     return result
 
 
-def make_loop(audio, n_loops, xf_samples):
-    """Loop audio with overlapping crossfade at boundaries.
+def make_circular_loop(one_loop, xf_samples):
+    """Prepare a loop for seamless tiling via circular crossfade.
 
-    Consecutive loops overlap by xf_samples. Equal-power (sqrt) curves
-    keep energy constant through the blend — no -6dB dip like linear.
-    Total length = (loop_len - xf_samples) * n_loops + xf_samples.
+    Blends the last xf_samples INTO the first xf_samples using equal-power
+    curves. The end is set to match the start so np.tile() is seamless.
     """
-    loop_len = len(audio)
-    if xf_samples <= 0 or n_loops <= 1:
-        if n_loops == 1:
-            return audio.copy()
-        return np.tile(audio, (n_loops, 1))
+    if xf_samples <= 0 or xf_samples > len(one_loop) // 2:
+        return one_loop.copy()
 
-    step = loop_len - xf_samples
-    total_len = step * n_loops + xf_samples
-    looped = np.zeros((total_len, 2))
+    result = one_loop.copy()
+    head = one_loop[:xf_samples].copy()
+    tail = one_loop[-xf_samples:].copy()
 
-    # Equal-power crossfade: sqrt curves satisfy fade_in² + fade_out² = 1
-    t = np.linspace(0, 1, xf_samples)
-    fade_in = np.sqrt(t)[:, np.newaxis]
-    fade_out = np.sqrt(1 - t)[:, np.newaxis]
+    t = np.linspace(0, 1, xf_samples)[:, np.newaxis]
+    fi = np.sqrt(t)       # 0 → 1
+    fo = np.sqrt(1 - t)   # 1 → 0
 
-    for i in range(n_loops):
-        offset = i * step
-        chunk = audio.copy()
-        if i > 0:
-            chunk[:xf_samples] *= fade_in
-        if i < n_loops - 1:
-            chunk[-xf_samples:] *= fade_out
-        looped[offset:offset + loop_len] += chunk
-
-    return looped
+    blend = head * fi + tail * fo
+    result[:xf_samples] = blend
+    result[-xf_samples:] = blend
+    return result
 
 
 # ── Step 1: Load stems ────────────────────────────────────────────────
@@ -141,97 +132,122 @@ s_bass_st = load_stereo(f"{STEMS}/saathiya/bass.wav")
 
 kg_drums_raw = load_stereo(f"{STEMS}/kho-gayi/drums.wav")
 kg_bass_raw = load_stereo(f"{STEMS}/kho-gayi/bass.wav")
+kg_other_raw = load_stereo(f"{STEMS}/kho-gayi/other.wav")
 print(f"  Saathiya: {len(s_vocals)/SR:.1f}s, KG: {len(kg_drums_raw)/SR:.1f}s")
 
 
-# ── Step 2: Build KG drum+bass loop ──────────────────────────────────
+# ── Step 2: Build full KG drums+bass section ─────────────────────────
 
-log("Step 2: Build KG drum+bass 4-bar loop")
+log("Step 2: Build full KG drums+bass from drop (no looping)")
 
-# KG instrumental: 33.245s-51s. Best loop region: ~35-47s (stable pattern).
-# Extract 4 bars starting from the drop kick.
-kg_loop_start_s = KG_DROP_S  # 33.245s — right at the drop
-kg_loop_len_s = LOOP_BARS * (4 * 60.0 / KG_BPM)  # 4 bars at KG's native BPM
-kg_loop_start = int(kg_loop_start_s * SR)
-kg_loop_len = int(kg_loop_len_s * SR)
-
-kg_drums_4bar = kg_drums_raw[kg_loop_start:kg_loop_start + kg_loop_len]
-kg_bass_4bar = kg_bass_raw[kg_loop_start:kg_loop_start + kg_loop_len]
-print(f"  Extracted {kg_loop_len_s:.3f}s of KG at native {KG_BPM} BPM")
-
-# Time-stretch both to 88.0 BPM
-print(f"  Stretching KG drums to {TARGET_BPM} BPM (rate={STRETCH_RATE:.4f})...")
-kg_drums_loop = pyrb.time_stretch(kg_drums_4bar, SR, STRETCH_RATE)
-print(f"  Stretching KG bass to {TARGET_BPM} BPM...")
-kg_bass_loop = pyrb.time_stretch(kg_bass_4bar, SR, STRETCH_RATE)
-
-# Trim to exact 4-bar length at target BPM
 target_loop_samples = int(LOOP_BARS * BAR_S * SR)
-kg_drums_loop = kg_drums_loop[:target_loop_samples]
-kg_bass_loop = kg_bass_loop[:target_loop_samples]
-print(f"  KG loop: {target_loop_samples/SR:.4f}s = {LOOP_BARS} bars at {TARGET_BPM} BPM")
+total_needed = target_loop_samples * N_FLUTE_LOOPS
+
+# Extract enough raw audio from the drop to cover the full flute duration
+raw_needed = int(total_needed / SR * FULL_STRETCH_RATE * SR) + SR
+kg_drop_sample = int(KG_DROP_S * SR)
+
+print(f"  Extracting {raw_needed/SR:.1f}s of raw KG from drop ({KG_DROP_S}s)...")
+kg_drums_section = kg_drums_raw[kg_drop_sample:kg_drop_sample + raw_needed]
+kg_bass_section = kg_bass_raw[kg_drop_sample:kg_drop_sample + raw_needed]
+
+print(f"  Stretching KG drums to {TARGET_BPM} BPM (rate={FULL_STRETCH_RATE:.4f}, "
+      f"source={KG_FULL_SECTION_BPM} BPM)...")
+kg_drums_full = pyrb.time_stretch(kg_drums_section, SR, FULL_STRETCH_RATE)
+
+print(f"  Stretching KG bass to {TARGET_BPM} BPM...")
+kg_bass_full = pyrb.time_stretch(kg_bass_section, SR, FULL_STRETCH_RATE)
 
 # Distort the bass (drive=6 = medium crunch)
 BASS_DRIVE = 6
 print(f"  Distorting bass (drive={BASS_DRIVE}, clean sub <80Hz)...")
-kg_bass_loop = distort_bass(kg_bass_loop, drive=BASS_DRIVE)
+kg_bass_full = distort_bass(kg_bass_full, drive=BASS_DRIVE)
 
-# Loop KG drums+bass — micro-fade edges then tile (zero overlap)
+# Trim to exact needed length
+kg_drums_full = kg_drums_full[:total_needed]
+kg_bass_full = kg_bass_full[:total_needed]
+if len(kg_drums_full) < total_needed:
+    kg_drums_full = np.vstack([kg_drums_full,
+                                np.zeros((total_needed - len(kg_drums_full), 2))])
+if len(kg_bass_full) < total_needed:
+    kg_bass_full = np.vstack([kg_bass_full,
+                               np.zeros((total_needed - len(kg_bass_full), 2))])
+
+print(f"  Full KG: {total_needed/SR:.1f}s of continuous drums+bass (no loop restarts)")
+
+
+# ── Step 2b: Build KG ding loop (high-pitched synth from "other" stem) ──
+
+log("Step 2b: Build KG ding loop (>1500Hz from 'other' stem)")
+
+# Ding stays as 4-bar loop — it's subtle and the loop boundary isn't audible
+kg_loop_start = int(KG_DROP_S * SR)
+kg_loop_len = int(LOOP_BARS * (4 * 60.0 / KG_BPM) * SR)
+
+DING_OFFSET_SAMPLES = int(0.006 * SR)
+kg_other_4bar = kg_other_raw[kg_loop_start - DING_OFFSET_SAMPLES:
+                              kg_loop_start - DING_OFFSET_SAMPLES + kg_loop_len]
+
+sos_ding = butter(4, 1500 / (SR / 2), btype='high', output='sos')
+kg_ding_4bar = np.column_stack([
+    sosfilt(sos_ding, kg_other_4bar[:, 0]),
+    sosfilt(sos_ding, kg_other_4bar[:, 1])
+])
+
+print(f"  Stretching KG ding to {TARGET_BPM} BPM...")
+kg_ding_loop = pyrb.time_stretch(kg_ding_4bar, SR, STRETCH_RATE)
+kg_ding_loop = kg_ding_loop[:target_loop_samples]
+
+# Loop ding with micro-fades
 edge_fade = int(EDGE_FADE_MS / 1000 * SR)
 fade_in = np.linspace(0, 1, edge_fade)[:, np.newaxis]
 fade_out = np.linspace(1, 0, edge_fade)[:, np.newaxis]
 
-for loop in [kg_drums_loop, kg_bass_loop]:
-    loop[:edge_fade] *= fade_in
-    loop[-edge_fade:] *= fade_out
+kg_ding_loop[:edge_fade] *= fade_in
+kg_ding_loop[-edge_fade:] *= fade_out
+kg_ding_looped = np.tile(kg_ding_loop, (N_FLUTE_LOOPS, 1))
 
-kg_drums_looped = np.tile(kg_drums_loop, (N_FLUTE_LOOPS, 1))
-kg_bass_looped = np.tile(kg_bass_loop, (N_FLUTE_LOOPS, 1))
-print(f"  KG looped: {len(kg_drums_looped)/SR:.1f}s")
+print(f"  Ding looped: {len(kg_ding_looped)/SR:.1f}s ({N_FLUTE_LOOPS}x, 4-bar loop)")
 
 
 # ── Step 3: Build flute loop ─────────────────────────────────────────
 
-log("Step 3: Build Saathiya flute 4-bar loop")
+log("Step 3: Build Saathiya flute 4-bar loop (from 290.4s)")
 
-# Extract from "other" stem at BEAT_GRID (downbeat, 1 beat before SNAP)
 flute_actual_len = int(LOOP_BARS * SAATHIYA_BAR_S * SR)
-flute_start = int(BEAT_GRID_S * SR)
+flute_start = int(FLUTE_SOURCE_S * SR)
 flute_raw = s_other[flute_start:flute_start + flute_actual_len]
 
-# Speed up to match 88.0 BPM exactly (same formula as KG: target/source)
 flute_stretch = TARGET_BPM / SAATHIYA_LOCAL_BPM
-print(f"  Stretch: {(flute_stretch-1)*100:.3f}% (Saathiya {SAATHIYA_LOCAL_BPM:.3f} → {TARGET_BPM})")
+print(f"  Source: {FLUTE_SOURCE_S}s, stretch: {(flute_stretch-1)*100:.3f}%")
 flute_loop = pyrb.time_stretch(flute_raw, SR, flute_stretch)
 flute_loop = flute_loop[:target_loop_samples]
 
-# Pad if needed
 if len(flute_loop) < target_loop_samples:
     pad = np.zeros((target_loop_samples - len(flute_loop), 2))
     flute_loop = np.vstack([flute_loop, pad])
 
-# Loop flute — micro-fade edges then tile (zero overlap, full phrase intact)
+# Circular crossfade for seamless tiling
+xf_samples = int(FLUTE_XF_MS / 1000 * SR)
+flute_loop = make_circular_loop(flute_loop, xf_samples)
+print(f"  Circular crossfade: {FLUTE_XF_MS}ms ({xf_samples} samples)")
+
+# Edge fades + tile
 flute_loop[:edge_fade] *= fade_in
 flute_loop[-edge_fade:] *= fade_out
 flute_looped = np.tile(flute_loop, (N_FLUTE_LOOPS, 1))
-print(f"  Flute looped: {len(flute_looped)/SR:.1f}s ({N_FLUTE_LOOPS}x, zero overlap)")
+print(f"  Flute looped: {len(flute_looped)/SR:.1f}s ({N_FLUTE_LOOPS}x, {FLUTE_XF_MS}ms xfade)")
 
 
 # ── Step 4: Build the 1-minute remix ─────────────────────────────────
 
 log("Step 4: Build 1-minute dreamy remix")
 
-# Structure:
-# - Last vocal sentence (~3 bars before drop, muffled KG already building)
-# - DROP at BEAT_GRID_S: KG + flute snap in
-# - Loop section: flute loop + KG drum/bass loop for ~60s
-
 loop_duration_s = len(flute_looped) / SR
 buildup_bars = 4
 buildup_start = BEAT_GRID_S - buildup_bars * BAR_S
-# Start at 3 bars before drop — catches the last vocal phrase
 clip_start = BEAT_GRID_S - 3 * BAR_S
-clip_end_s = BEAT_GRID_S + loop_duration_s + 4.0  # 4s fadeout tail
+clip_end_s = BEAT_GRID_S + loop_duration_s + 4.0
 clip_samples = int((clip_end_s - clip_start) * SR)
 cs = int(clip_start * SR)
 
@@ -243,53 +259,50 @@ so = extract(s_other, cs, clip_samples)
 sd = extract(s_drums_st, cs, clip_samples)
 sb = extract(s_bass_st, cs, clip_samples)
 
-# Place ALL loops at BEAT_GRID_S (downbeat) — KG + flute on the same downbeat
+# Place everything at BEAT_GRID_S (downbeat)
 drop_clip_start = int((BEAT_GRID_S - clip_start) * SR)
-flute_loop_clip_start = drop_clip_start
 
 flute_in_clip = np.zeros((clip_samples, 2))
 kg_drums_in_clip = np.zeros((clip_samples, 2))
 kg_bass_in_clip = np.zeros((clip_samples, 2))
+kg_ding_in_clip = np.zeros((clip_samples, 2))
 
-for src, dst, start in [
-    (flute_looped, flute_in_clip, flute_loop_clip_start),
-    (kg_drums_looped, kg_drums_in_clip, drop_clip_start),
-    (kg_bass_looped, kg_bass_in_clip, drop_clip_start),
+for src, dst in [
+    (flute_looped, flute_in_clip),
+    (kg_drums_full, kg_drums_in_clip),
+    (kg_bass_full, kg_bass_in_clip),
+    (kg_ding_looped, kg_ding_in_clip),
 ]:
-    end = min(start + len(src), clip_samples)
-    copy_len = end - start
+    end = min(drop_clip_start + len(src), clip_samples)
+    copy_len = end - drop_clip_start
     if copy_len > 0:
-        dst[start:end] = src[:copy_len]
+        dst[drop_clip_start:end] = src[:copy_len]
 
-# Build envelopes — SNAP transition (same as proven "decoupled" approach)
-# KG builds in muffled, SNAPS to full at BEAT_GRID_S, bass swap at SNAP_S
+# Build envelopes
 t = np.arange(clip_samples) / SR + clip_start
 
 fadeout_start = clip_end_s - 4.0
 fadeout_end = clip_end_s
 
-kg_buildup_env = np.zeros(clip_samples)   # muffled KG before drop
-kg_loop_env = np.zeros(clip_samples)      # looped KG post-drop
-flute_loop_env = np.zeros(clip_samples)   # looped flute post-snap
-s_bass_env = np.ones(clip_samples)        # Saathiya bass/drums fade
+kg_buildup_env = np.zeros(clip_samples)
+kg_loop_env = np.zeros(clip_samples)
+flute_loop_env = np.zeros(clip_samples)
+s_bass_env = np.ones(clip_samples)
 s_drums_env = np.ones(clip_samples)
-s_vocals_env = np.ones(clip_samples)     # Saathiya vocals
-s_other_env = np.ones(clip_samples)       # original "other" stem
+s_vocals_env = np.ones(clip_samples)
+s_other_env = np.ones(clip_samples)
 master_fade = np.ones(clip_samples)
 
 for i in range(clip_samples):
     ti = t[i]
 
     if ti < buildup_start:
-        # Pure Saathiya
         pass
     elif ti < BEAT_GRID_S:
-        # Buildup: KG fades in muffled
         p = (ti - buildup_start) / (BEAT_GRID_S - buildup_start)
         kg_buildup_env[i] = 0.15 + 0.35 * p
         s_bass_env[i] = 1.0 - 0.5 * p
     else:
-        # DROP at downbeat: KG + flute snap in, ALL Saathiya cut
         kg_loop_env[i] = 1.0
         flute_loop_env[i] = 1.0
         s_vocals_env[i] = 0.0
@@ -297,12 +310,11 @@ for i in range(clip_samples):
         s_drums_env[i] = 0.0
         s_other_env[i] = 0.0
 
-    # Final fadeout
     if ti > fadeout_start:
         fp = (ti - fadeout_start) / (fadeout_end - fadeout_start)
         master_fade[i] = max(0, 1.0 - fp)
 
-# Saathiya mix (with per-stem envelopes)
+# Saathiya mix
 saathiya_mix = (
     sv * 0.85 * s_vocals_env[:, np.newaxis] +
     so * 0.70 * s_other_env[:, np.newaxis] +
@@ -313,7 +325,6 @@ saathiya_mix = (
 # KG buildup: muffled version from cached stretched stems
 nyq = SR / 2
 b_lo, a_lo = butter(4, min(300 / nyq, 0.99), btype='low')
-b_mid, a_mid = butter(4, min(1500 / nyq, 0.99), btype='low')
 
 kg_stretched_drums = load_stereo(f"{OUTPUT}/kg-drums-stretched.wav")
 kg_stretched_bass = load_stereo(f"{OUTPUT}/kg-bass-stretched.wav")
@@ -328,10 +339,10 @@ kg_buildup_muf = np.column_stack([
     filtfilt(b_lo, a_lo, kg_buildup_audio[:, 1])
 ])
 
-# Loop world: flute + KG drums + KG bass (separate so we can envelope them)
-flute_mix = flute_in_clip * 0.70 * flute_loop_env[:, np.newaxis]
+# Loop world: flute + KG drums + KG bass + KG ding
+flute_mix = flute_in_clip * 0.57 * flute_loop_env[:, np.newaxis]
 kg_loop_mix = (
-    kg_drums_in_clip * 0.85 + kg_bass_in_clip * 0.70
+    kg_drums_in_clip * 0.85 + kg_bass_in_clip * 0.50 + kg_ding_in_clip * 0.30
 ) * kg_loop_env[:, np.newaxis]
 
 # Final mix
@@ -365,10 +376,9 @@ print(f"""
     {clip_start:.0f}s:  Pure Saathiya
     {buildup_start:.0f}s:  KG builds in muffled
     {BEAT_GRID_S:.0f}s:  DROP — KG snaps to full
-    {SNAP_S:.0f}s:  Bass swap + flute loop takes over
     {fadeout_start:.0f}s:  Fadeout
 
-  Loops (both at 88.0 BPM, zero drift):
-    Flute: 4-bar, {N_FLUTE_LOOPS}x
-    KG drums+bass: 4-bar, {N_FLUTE_LOOPS}x
+  KG: Full section from drop ({KG_FULL_SECTION_BPM} BPM → {TARGET_BPM} BPM, no loop restarts)
+  Flute: 4-bar from {FLUTE_SOURCE_S}s, {N_FLUTE_LOOPS}x, {FLUTE_XF_MS}ms circular xfade
+  Flute volume: 0.57
 """)

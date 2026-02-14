@@ -1,78 +1,109 @@
-## Handoff: DnB Remix — KG Guitar Layer + Flute Loop Polish
-
-### Project Location
-`~/Documents/dnb-remix/`
-MEMORY: `~/.claude/projects/-Users-kshitijkarke-Documents-dnb-remix/memory/MEMORY.md`
-Repo: `https://github.com/kk95/dnb-remix` (private, kk95 account)
+## Handoff: Loop Smoothness Fix + Ding Fine-Tuning
 
 ### Branch & Files
-Branch: `main` (clean, all committed and pushed)
-Latest commit: `a5f6cd1` — Fix flute stretch rate + zero-overlap looping
+
+Branch: `main` (clean, up to date with origin)
+Modified (unstaged): `scripts/flute-loop-drop.py` (+82 lines — ding layer, loop smoothing from prior sessions, NOT yet committed)
+New (untracked): `scripts/ding-tuner.py` (Gradio UI for ding ramp tuning), `scripts/find-flute-riff-instances.py` (flute riff scanner)
 
 ### What's Done (This Session)
 
-1. **Fixed flute stretch rate (BUG)** — `flute_stretch` was computed as `BAR_S / SAATHIYA_BAR_S` = 0.99931, which SLOWED the flute instead of speeding it up. Fixed to `TARGET_BPM / SAATHIYA_LOCAL_BPM` = 1.000694. This was causing the flute to drift relative to KG.
+1. **Built Gradio ding tuner** (`scripts/ding-tuner.py`) — interactive UI with sliders for ding build-in (start vol, end vol, ramp duration, curve shape, master level). Pre-computes stems at startup, generates audio in <1s. Has accessible tooltips explaining each control for non-musicians. Needs flute loop controls added (see below).
 
-2. **Replaced crossfade looping with zero-overlap tiling** — Tested overlapping crossfade (1-beat, 2-beat, 15ms) — all created audible artifacts ("waiting to press restart" feel). Final approach: `np.tile()` with 3ms edge fades. No overlap, no dip, full phrase intact.
+2. **Analyzed djay video (1)** — extracted frames to `reference/frames-v2/`. Found complete transition settings:
+   - Volume: "Fade in fade out" (Custom curves)
+   - EQ: **"Center bass swap"** — swaps low-end between tracks at midpoint
+   - Effect: "None"
+   - Duration: 8 bars
+   - **Key insight: djay does NOT loop the flute** — plays the continuous original track
 
-3. **Tested and rejected round effect** — 2-layer flute (offset by 2 bars) made it too busy. User pointed out bars 3-4 have DIFFERENT notes (not silence/trail-off) — overlapping them with bars 1-2 muddied both melodies.
+3. **Scanned entire Saathiya "other" stem for flute riff instances** — found 20 via chroma correlation. Current extraction at 306.772s has the WORST loop boundary (0.064 score) despite perfect chroma match. Best candidate: **290.4s** (0.649 boundary, 0.81 chroma). Exported top 5 as `flute-candidate-{time}s.mp3` + `flute-loop-test-{time}s.mp3`.
 
-4. **Tested and rejected energy compensation** — Volume ramp on bars 3-4 (1.07x) created perceived "slowing down" at the end of each loop.
+4. **Diagnosed loop boundary energy jump** — 44% energy spike at every loop restart (end RMS 0.011 → start RMS 0.019). Visible in `output/constant-stretch/djay-vs-ours-290.4s.png`.
 
-5. **Analyzed flute riff across the full Saathiya song** — Same riff at 284.9s has 10% stronger end notes but also has vocal bleed in the "other" stem. At 306.8s (current extraction) the stems are clean. Notes are F#, B, C# in bar 4 at both positions.
+5. **Tested multiple loop approaches**:
+   - ✅ 4-bar from 290.4s with 500ms circular crossfade — best so far (`test-xf-500ms.mp3`)
+   - ❌ 2-bar loop (bars 1-2 only) — loses iconic phrase
+   - ❌ djay-style continuous — only 10s of flute after drop, too short
+   - ❌ Circular xfade 300ms — still jerky
+   - ❌ Longer xfades (1beat, 2beat, 1bar) — lose melodic detail
 
-6. **Initialized git repo** — Private repo at github.com/kk95/dnb-remix. Uses noreply email. Audio/video/stems/output all gitignored.
+### What's Next (PRIORITY: Fix Start-Stop Loop Feel)
 
-### What's Next
+1. **Build interactive loop tuner** — the user needs knob-like control to fine-tune the loop boundary. Parameters to expose:
+   - Circular crossfade duration (0-1000ms) — currently 500ms is best
+   - Flute source position (dropdown: 290.4s, 72.2s, 61.3s, etc.)
+   - **KG drum loop smoothing** — the reversed kick tail + noise riser at end of each drum loop + soft attack on loops 2+ creates build→drop→build cycle that ALSO contributes to start-stop feel
+   - Option to remove/reduce the reversed kick tail and noise riser
+   - Flute volume (currently 0.70)
+   - All ding controls already in `ding-tuner.py`
 
-1. **Add KG guitar from ~2 minutes in** — User wants the guitar riff from KG around 120s to play alongside the flute. Need to:
-   - Find the guitar in KG stems (check `stems/htdemucs_ft/kho-gayi/other.wav` around 120s)
-   - Extract a loop, time-stretch to 88.0 BPM (same as KG drums/bass)
-   - Layer it with the flute — figure out how they complement each other
-   - The guitar might help the flute loop restart feel more natural (fills the transition)
+   **Approach**: Extend `scripts/ding-tuner.py` to add a "Loop Smoothness" section. Pre-compute flute loops from multiple sources at startup. The callback applies crossfade + drum modifications dynamically.
 
-2. **Flute loop restart still slightly audible** — The phrase boundary is still noticeable. The guitar layer may help mask this. If not, consider:
-   - Trying a different extraction point (284.9s has stronger ending but vocal bleed)
-   - Subtle reverb tail at the loop boundary
-   - Slightly adjusting the loop start/end point within the bar
+2. **Investigate KG drum loop boundary** — user suspects drums also contribute to start-stop feel. The drum loop has:
+   - Reversed kick (80ms) added to end of each iteration
+   - Noise riser (1 beat = 682ms) at end of each iteration
+   - Soft attack (0.3→1.0 over 15ms) on loops 2+
+   - 3ms edge fades
+   These create an audible build→release→build cycle. Try: removing the riser/kick-tail, or applying circular crossfade to drums too.
 
-3. **Speed up to 170 BPM** for actual DnB tempo (currently 88.0 = half-time)
+3. **Commit pending changes** — `flute-loop-drop.py` still uncommitted
 
-4. **Export stems for FL Studio** — Individual loops at correct alignment
+4. **Once loop is nailed**: Speed up to 170 BPM for actual DnB tempo
+
+5. **Export stems for FL Studio**
 
 ### Key Context
 
-- **Drop timing is GOOD** — user confirmed "that beat drop timing is appropriate (right after saathiya singing stops)"
-- **Flute stretch = `TARGET_BPM / SAATHIYA_LOCAL_BPM`** — same formula as KG. Was inverted for months.
-- **Zero-overlap looping** — `np.tile()` + 3ms edge fades. Do NOT use overlapping crossfades.
-- **Bars 3-4 of flute have DIFFERENT NOTES** — not trail-off/silence. Don't try to "fill" them.
-- **Volume ramps create perceived tempo change** — even 7% ramp felt like "slowing down"
-- **pyrubberband rate = speed ratio**: rate < 1 = slower, rate > 1 = faster
-- **ALL loops start at BEAT_GRID_S (306.772s)** — the Saathiya downbeat
-- **Constant stretch ONLY** — never beat-to-beat warp
-- Read MEMORY.md for full BPM values, song structure, and lesson history
+- **KG drums + flute BOTH contribute to start-stop feel** — not just one or the other. The drum loop's reversed kick tail + noise riser + soft attack creates a mini "build-up" at every loop boundary that reinforces the flute's natural energy decay.
+- **290.4s is the best flute source** — user confirmed it loops well and sounds right
+- **500ms circular crossfade is the right amount** — user said "sounds right"
+- **2-bar loops DON'T WORK** — the full 4-bar phrase IS the hook, cutting it loses the magic
+- **User wants music-accessible UI** — hover tooltips explaining concepts in plain language, not musical jargon
+- **User prefers listening over plots** — always generate audio, not just analysis
+- **Gradio is installed** in the venv (v6.5.1) — `gr.Blocks(theme=...)` is deprecated, pass theme to `launch()`
+- **Background agents can't use Bash** — permissions only allow `Bash(source:*)` and `Bash(python:*)`, background agents can't prompt so they get auto-denied. Run scripts from main context.
+- All existing MEMORY.md context still applies (BPM values, phase alignment, etc.)
 
 ### Key Files
+
 ```
-scripts/flute-loop-drop.py           # ★ CURRENT: looped flute + KG DnB remix
-stems/htdemucs_ft/kho-gayi/other.wav # Check ~120s for guitar riff
-stems/htdemucs_ft/saathiya/other.wav # Flute source (extracted from 306.772s)
+scripts/flute-loop-drop.py           # ★ MAIN (modified, uncommitted — has ding + smoothing)
+scripts/ding-tuner.py                # ★ Gradio UI (ding controls + accessible tooltips, needs loop controls)
+scripts/find-flute-riff-instances.py # Flute riff scanner (already run, results exported)
 output/constant-stretch/
-  dreamy-flute-dnb-*.mp3             # Latest renders (timestamped)
-  flute-pattern-comparison.png       # Flute riff comparison across song
-  flute-beat-aligned-comparison.png  # Beat-aligned 4-bar comparison
-  flute-last-bars-detail.png         # Spectral comparison of end notes
+  test-xf-500ms.mp3                  # ★ BEST SO FAR — 4-bar 290.4s, 500ms circular xfade
+  test-xf-{1beat,2beat,1bar}*.mp3    # Other crossfade durations
+  test-2bar-*-xf500.mp3              # 2-bar loops (rejected — incomplete phrase)
+  test-flute-from-{290.4,72.2}s.mp3  # Full mix with different flute sources
+  test-djay-style-continuous.mp3     # No-loop version (too short)
+  flute-candidate-*.mp3              # Raw flute extracts from different positions
+  flute-loop-test-*.mp3              # 2-loop audition files
+  djay-vs-ours-290.4s.png            # Visual comparison of loop boundaries
+  dreamy-flute-dnb-20260205-160936.mp3 # Previous best render (before this session)
+reference/
+  frames-v2/                         # djay video (1) frames — shows transition UI settings
+stems/htdemucs_ft/                   # Demucs stems
 ```
 
-### Analysis Plots (This Session)
-```
-output/constant-stretch/
-  flute-pattern-comparison.png       # Energy correlation of flute riff at different song positions
-  flute-beat-aligned-comparison.png  # Beat-aligned extraction candidates with per-bar RMS
-  flute-last-bars-detail.png         # Spectral + chroma comparison: 306.8s vs 284.9s last bars
+### Mix Levels (Current)
+
+```python
+kg_drums: 0.85
+kg_bass: 0.50 (distorted, drive=6)
+kg_ding: 0.30 (with continuous ramp over 3 loops)
+flute: 0.70
+saathiya_vocals: 0.85 (cut at drop)
+saathiya_other: 0.70 (cut at drop)
+saathiya_drums: 0.40 (cut at drop)
+saathiya_bass: 0.50 (fades during buildup)
 ```
 
-### Open Questions
-- What does the KG guitar sound like at ~120s? Is it in the "other" stem or somewhere else?
-- Will the guitar layer help mask the flute loop restart?
-- Ready for 170 BPM speed-up or still polishing at 88?
+### Open Issues
+
+- [ ] Uncommitted changes in `flute-loop-drop.py` — ding layer + loop smoothing
+- [ ] **Loop start-stop feel** — main unsolved problem. Both flute AND KG drums contribute. User wants interactive tuning.
+- [ ] Ding ramp needs fine-tuning (Gradio UI built but not yet tuned by user)
+- [ ] `ding-tuner.py` needs loop smoothness controls added (crossfade duration, drum boundary options, flute source selector)
+- [ ] Non-melodic KG textures not yet explored (percussion, risers, vocal chops)
+- [ ] KG guitar confirmed to be in DIFFERENT SCALE — don't layer melodic KG content with flute
