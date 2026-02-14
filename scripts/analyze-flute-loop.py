@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Analyze flute loop boundaries — energy, waveform, spectral content at start/end."""
 
+import os
 import numpy as np
 import soundfile as sf
 import pyrubberband as pyrb
 import matplotlib.pyplot as plt
 from scipy.signal import stft
 
-PROJECT = "/Users/kshitijkarke/Documents/dnb-remix"
+PROJECT = os.path.expanduser("~/Documents/dnb-remix")
 STEMS = f"{PROJECT}/stems/htdemucs_ft"
 OUTPUT = f"{PROJECT}/output/constant-stretch"
 SR = 44100

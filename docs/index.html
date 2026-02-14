@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saathiya x Kho Gayi — Bollywood DnB Remix</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #fff;
+    }
+
+    h1 span { color: #7c5cfc; }
+
+    .subtitle {
+      color: #888;
+      font-size: 0.95rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .subtitle a { color: #7c5cfc; text-decoration: none; }
+    .subtitle a:hover { text-decoration: underline; }
+
+    .hero {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    .hero h2 {
+      font-size: 1.1rem;
+      color: #7c5cfc;
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    .hero p {
+      color: #aaa;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    audio {
+      width: 100%;
+      height: 40px;
+      border-radius: 8px;
+    }
+
+    .day {
+      margin-bottom: 2.5rem;
+    }
+
+    .day-header {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+
+    .day-meta {
+      color: #666;
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .track {
+      background: #111118;
+      border: 1px solid #1e1e2e;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .track-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #ccc;
+      margin-bottom: 0.15rem;
+    }
+
+    .track-desc {
+      font-size: 0.8rem;
+      color: #777;
+      margin-bottom: 0.75rem;
+    }
+
+    .track.highlight {
+      border-color: #7c5cfc;
+      background: #12121f;
+    }
+
+    .track.highlight .track-title { color: #fff; }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .badge-breakthrough { background: #1a3a2a; color: #4ade80; }
+    .badge-final { background: #2a1a3a; color: #a78bfa; }
+    .badge-problem { background: #3a1a1a; color: #f87171; }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 2rem;
+      color: #7c5cfc;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+
+    .back-link:hover { text-decoration: underline; }
+
+    @media (max-width: 480px) {
+      body { padding: 1rem 0.75rem; }
+      h1 { font-size: 1.4rem; }
+      .hero { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Saathiya <span>&times;</span> Kho Gayi</h1>
+  <p class="subtitle">
+    A Bollywood DnB remix built entirely through prompting with
+    <a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank">Claude Code</a>.
+    No DAW. No Python experience since 2014. Just ears and natural language.
+    <br><a href="https://github.com/kk95/dnb-remix">&larr; Back to repo</a>
+  </p>
+
+  <div class="hero">
+    <h2>The Final Track</h2>
+    <p>
+      Saathiya's flute melody looped over Kho Gayi's full drum section at 88 BPM.
+      Full-section KG drums (no loop restarts), 134ms circular crossfade, tanh bass distortion.
+    </p>
+    <audio controls preload="metadata">
+      <source src="../samples/13-final-full-section.mp3" type="audio/mpeg">
+    </audio>
+  </div>
+
+  <div class="day">
+    <h3 class="day-header">Day 1: February 5 — The Marathon</h3>
+    <p class="day-meta">2 AM &rarr; 4:30 PM &middot; 14 hours &middot; 437 output files</p>
+
+    <div class="track">
+      <div class="track-title">Early Transition Attempt</div>
+      <div class="track-desc">First programmatic recreation of the djay transition. Beat alignment is rough — tempos fighting each other.</div>
+      <audio controls preload="none">
+        <source src="../samples/01-early-transition-attempt.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track">
+      <div class="track-title">Beat-Warped Wobble <span class="badge badge-problem">Problem</span></div>
+      <div class="track-desc">Each beat individually time-mapped. Creates audible speed fluctuations — like someone tapping the tempo button.</div>
+      <audio controls preload="none">
+        <source src="../samples/02-beat-warped-wobble.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track">
+      <div class="track-title">Beat-Locked Drop</div>
+      <div class="track-desc">Improved alignment, but beat detection errors still cause micro-timing shifts.</div>
+      <audio controls preload="none">
+        <source src="../samples/03-beat-locked-drop.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track highlight">
+      <div class="track-title">Constant Stretch <span class="badge badge-breakthrough">Breakthrough</span></div>
+      <div class="track-desc">5 AM. One constant time-stretch at 88/95.7 = 0.9195. Night and day difference. No wobble. The foundation.</div>
+      <audio controls preload="none">
+        <source src="../samples/04-constant-stretch-breakthrough.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track">
+      <div class="track-title">Refined Spotify-Style</div>
+      <div class="track-desc">Smooth crossfade like Spotify/djay would do it. Drop timing is closer, but transition still feels... late.</div>
+      <audio controls preload="none">
+        <source src="../samples/05-refined-spotify-style.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track highlight">
+      <div class="track-title">First Looped Drop <span class="badge badge-breakthrough">Snap</span></div>
+      <div class="track-desc">All Saathiya stems cut to zero at the downbeat. KG enters at full volume instantly. No more "late" feeling.</div>
+      <audio controls preload="none">
+        <source src="../samples/06-first-looped-drop.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track">
+      <div class="track-title">Flute Loop — 2-Bar</div>
+      <div class="track-desc">Too short. The riff feels like it's on repeat immediately.</div>
+      <audio controls preload="none">
+        <source src="../samples/07-flute-loop-2bar.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track">
+      <div class="track-title">Flute Loop — 4-Bar</div>
+      <div class="track-desc">Full phrase. Bars 1-2 are the main riff, bars 3-4 have a melodic variation. Much more natural.</div>
+      <audio controls preload="none">
+        <source src="../samples/08-flute-loop-4bar.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track">
+      <div class="track-title">Bass Distortion — Light</div>
+      <div class="track-desc">Subtle warmth. Almost too clean.</div>
+      <audio controls preload="none">
+        <source src="../samples/09-bass-dist-light.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track">
+      <div class="track-title">Bass Distortion — Medium</div>
+      <div class="track-desc">The sweet spot. Grit on the mids, clean sub preserved.</div>
+      <audio controls preload="none">
+        <source src="../samples/10-bass-dist-medium.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track">
+      <div class="track-title">Bass Distortion — Heavy</div>
+      <div class="track-desc">Too aggressive. Overpowers the flute.</div>
+      <audio controls preload="none">
+        <source src="../samples/11-bass-dist-heavy.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track highlight">
+      <div class="track-title">Day 1 Final <span class="badge badge-final">End of Day</span></div>
+      <div class="track-desc">Where I left off after the marathon. 4-bar KG drum loop, flute at 290.4s, medium bass distortion.</div>
+      <audio controls preload="none">
+        <source src="../samples/12-final-dreamy-flute-dnb.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+  </div>
+
+  <div class="day">
+    <h3 class="day-header">Day 2: February 7 — Midnight Flute Hunt</h3>
+    <p class="day-meta">12 AM &rarr; 1 AM &middot; 1 hour &middot; Pure R&amp;D, no full render</p>
+    <div class="track">
+      <div class="track-title" style="color: #777; font-style: italic;">Exploration session</div>
+      <div class="track-desc">
+        Tested 5 flute source positions across the song. Experimented with crossfade durations
+        (500ms, 681ms, 1362ms, 2727ms). Found that 290.4s is the best loop boundary.
+        No full remix rendered — just isolated loop tests.
+      </div>
+    </div>
+  </div>
+
+  <div class="day">
+    <h3 class="day-header">Day 3: February 14 — Zero Drum Restarts</h3>
+    <p class="day-meta">7 AM &rarr; 9 AM &middot; 2 hours &middot; Architecture fix</p>
+
+    <div class="track highlight">
+      <div class="track-title">Final Track <span class="badge badge-final">Final</span></div>
+      <div class="track-desc">
+        Full continuous KG drum section (no more 4-bar loop restarts). Corrected stretch rate
+        from 88/95.703 to 88/95.0 after discovering local BPM differs from global. 134ms circular
+        crossfade on flute, volume dialed back to 0.57.
+      </div>
+      <audio controls preload="metadata">
+        <source src="../samples/13-final-full-section.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+  </div>
+
+  <a class="back-link" href="https://github.com/kk95/dnb-remix">&larr; Back to repository</a>
+
+</body>
+</html>

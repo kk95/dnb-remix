@@ -5,11 +5,12 @@ using high-resolution beat detection from the drums stem.
 This tells us the REAL bar duration for the flute loop.
 """
 
+import os
 import numpy as np
 import soundfile as sf
 import librosa
 
-PROJECT = "/Users/kshitijkarke/Documents/dnb-remix"
+PROJECT = os.path.expanduser("~/Documents/dnb-remix")
 DRUMS = f"{PROJECT}/stems/htdemucs_ft/saathiya/drums.wav"
 SR = 44100
 

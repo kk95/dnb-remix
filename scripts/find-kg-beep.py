@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Find high-pitched beeping/synth in KG — focused on buildup region (20-40s)."""
 
+import os
 import numpy as np
 import soundfile as sf
 import matplotlib.pyplot as plt
 from scipy.signal import spectrogram, butter, sosfilt
 
-PROJECT = "/Users/kshitijkarke/Documents/dnb-remix"
+PROJECT = os.path.expanduser("~/Documents/dnb-remix")
 STEMS = f"{PROJECT}/stems/htdemucs_ft/kho-gayi"
 OUTPUT = f"{PROJECT}/output/constant-stretch"
 SR = 44100

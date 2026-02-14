@@ -4,10 +4,11 @@ Analyze the flute phrase structure in Saathiya's "other" stem
 to find the natural loop point (where the trail-off riff ends).
 """
 
+import os
 import numpy as np
 import soundfile as sf
 
-PROJECT = "/Users/kshitijkarke/Documents/dnb-remix"
+PROJECT = os.path.expanduser("~/Documents/dnb-remix")
 SR = 44100
 SNAP_S = 307.454
 BEAT_S = 60.0 / 88.0  # 0.6818s
