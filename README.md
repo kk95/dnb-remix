@@ -10,7 +10,7 @@ A Bollywood drum & bass remix: Saathiya's dreamy flute melody looped over Kho Ga
 
 [**Listen in browser**](https://kk95.github.io/dnb-remix/docs/) | [Download the long version (2:57)](samples/17-final-long-version.mp3) | [The February version (1:17)](samples/13-final-full-section.mp3)
 
-Sonu Nigam opens with "teri ek hansi ke badle", Kho Gayi's drums tease in underneath and pull out so Saathiya's bassline leads into a half-time drop, where "hanste rehna" (keep laughing) lands. The antara gets room to breathe, builds back, and breaks into a 176 BPM two-step built from Kho Gayi's own kick and snare.
+Sonu Nigam opens with "teri ek hansi ke badle", Kho Gayi's drums tease in underneath and pull out so Saathiya's bassline leads into a half-time drop, where "hanste rehna" lands. The antara gets room to breathe, builds back, and breaks into a 176 BPM two-step built from Kho Gayi's own kick and snare.
 
 ## The Spark
 
@@ -84,7 +84,7 @@ Round 1 was six 3-minute versions with different drum and bass options. Two thin
 
 > "v3 is gnarlyyy"
 
-Then I asked whether we had looked at the lyrics at all. We hadn't. "Hanste rehna" (keep laughing) landing on a drop had been luck. Whisper transcribed the isolated vocals with a timestamp for every word, which turned the song into phrases that could be placed on the beat. It also fixed a problem I kept hearing: the hook always started mid-word, on the tail end of "mera aasmaan le le".
+Then I asked whether we had looked at the lyrics at all. We hadn't. "Hanste rehna" landing on a drop had been luck. Whisper transcribed the isolated vocals with a timestamp for every word, which turned the song into phrases that could be placed on the beat. It also fixed a problem I kept hearing: the hook always started mid-word, on the tail end of "mera aasmaan le le".
 
 Getting "hanste rehna" itself right took three tries. I kept hearing a "hmm" before it, then the end of "madham". The singer runs "madham" straight into "hanste" without a breath, and the first two cuts started inside that hum. The pitch data looked fine both times. Only ears caught it ([the final cut](samples/16-hanste-rehna.mp3)).
 

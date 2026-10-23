@@ -54,7 +54,7 @@ G = dict(s_vox=0.85, s_other=0.70, s_drums=0.40, s_bass=0.50,
 
 # Saathiya phrase cut points in seconds (snapped by find-adlibs.py)
 PHRASES = {
-    "hanste-rehna": (134.615, 136.514),     # "keep laughing", the "madham madham" take, cut on the "h"
+    "hanste-rehna": (134.615, 136.514),     # the "madham madham" take, cut on the "h"
 }
 
 # Saathiya bar range + where the vocal line actually starts (may be a pickup before it)
