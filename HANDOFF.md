@@ -24,7 +24,9 @@ the `rubberband` and `ffmpeg` CLIs. `mlx-whisper` only for re-transcribing lyric
 Opening hook "teri ek hansi ke badle" (Saathiya bars 87-101) with KG's drop groove teasing in muffled
 from the second "Saathiya" and pulling out for the last bar → half-time drop A (KG drop 2, "hanste
 rehna" on the drop and once more) → antara 2 (bars 58-71), KG guitar fading under its start, KG drums
-creeping back from "teri baali" → 176 two-step drop B → 4s fade.
+creeping back from "teri baali" → 176 two-step drop B → 4s fade. Both drops use the February ding
+(KG drop 1's synth part, above 1.5 kHz) at full level from the downbeat, ~4 dB over February's 0.30;
+KG drop 2's own synth plays different notes.
 
 ### Mastering (applies to every render)
 
@@ -46,6 +48,7 @@ creeping back from "teri baali" → 176 two-step drop B → 4s fade.
 - No snare rolls in builds (sound "pointed"); shakers only inside drops; vocals over 176 drums sound off.
 - Kho Gayi's melodic parts (guitar) are in a different key: fine as a fading tail, not as a layer under Sonu.
 - Preferred outro: drop keeps rolling into a fade, like the February mix.
+- "Hanste rehna" stays off drop B: its pickup would sing over the antara's held last "hai", and it's drop A's moment.
 
 ### Open ideas (not started)
 
