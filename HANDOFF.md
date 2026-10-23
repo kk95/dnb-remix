@@ -33,6 +33,9 @@ creeping back from "teri baali" → 176 two-step drop B → 4s fade.
 - Bass distortion splits at 250 Hz (was 80): tanh(6x) boosted 80-250 Hz ~14 dB, a boom 13 dB over the reference.
 - Saathiya's MP3 is mono (L/R correlation 1.00); a decorrelated stereo room on its parts gives width.
 - Hooks sit 4 dB down (HOOK_GAIN) so drops stay 4-6 dB above them.
+- The 176 drop needs its own low end (one kick every other beat): the kit kick gets a sine body
+  (110 -> 50 Hz, 35 ms decay) and drop B's bass a +4 dB bell at 55-110 Hz. A 70 ms body pumped the
+  mix ~10 dB per kick ("shock absorbing"); 35 ms + sidechain 0.25 brought it to ~7.6 dB.
 - `--wav` writes the 24-bit master; the release asset (tag `long-version`) is that file.
 
 ### Listening notes that still apply
