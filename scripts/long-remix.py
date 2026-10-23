@@ -24,7 +24,8 @@ Lyric timings come from scripts/transcribe-lyrics.py (Whisper on the vocal stem)
 with cut points snapped to the gaps between words by scripts/find-adlibs.py.
 Earlier rounds' scripts are kept next to their renders in output/long/long-remix-r*.py.
 
-Usage: python scripts/long-remix.py [variant ...]   (no args = render all)
+Usage: python scripts/long-remix.py [--wav] [variant ...]   (no args = render all)
+       --wav also writes a 24-bit WAV master next to the MP3, for sending.
 """
 import os
 import sys
@@ -256,7 +257,7 @@ def drop_b(buses, S, K, bar, plan):
     return end
 
 
-def render(name, v, S, K):
+def render(name, v, S, K, lossless=False):
     n = at(100)
     buses = {b: np.zeros((n, 2)) for b in ["sat", "vox", "build", "drums", "bass", "ding", "flute"]}
     blocks = dict(drop_a=drop_a, hook=hook, drop_b=drop_b)
@@ -276,19 +277,22 @@ def render(name, v, S, K):
     mix[-n_fade:] *= np.linspace(1, 0, n_fade)[:, None]
     n_in = at(0.25)             # one beat, so a mid-song opening doesn't start cold
     mix[:n_in] *= np.linspace(0, 1, n_in)[:, None]
-    return master(mix, name)
+    return master(mix, name, lossless)
 
 
-def master(mix, name):
+def master(mix, name, lossless=False):
     meter = pyln.Meter(SR)
     mix = mix * 10 ** ((TARGET_LUFS - meter.integrated_loudness(mix)) / 20)
-    wav, mp3 = f"{OUT}/{name}.wav", f"{OUT}/{name}.mp3"
-    sf.write(wav, mix.astype(np.float32), SR, subtype="FLOAT")
+    raw, mp3 = f"{OUT}/{name}-raw.wav", f"{OUT}/{name}.mp3"
+    sf.write(raw, mix.astype(np.float32), SR, subtype="FLOAT")
     # Brickwall at -1 dBFS: the old mix only peak-normalized, so its drops sat at -14.8 LUFS
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", wav, "-af",
-                    "alimiter=limit=0.891:attack=3:release=60:level=disabled",
-                    "-codec:a", "libmp3lame", "-b:a", "320k", mp3], check=True)
-    os.remove(wav)
+    limiter = ["-af", "alimiter=limit=0.891:attack=3:release=60:level=disabled"]
+    outputs = [["-codec:a", "libmp3lame", "-b:a", "320k", mp3]]
+    if lossless:                # 44.1 kHz is the stems' rate, so 24-bit is the only upgrade left
+        outputs.append(["-codec:a", "pcm_s24le", f"{OUT}/{name}-master.wav"])
+    for out in outputs:
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", raw, *limiter, *out], check=True)
+    os.remove(raw)
     return mp3
 
 
@@ -303,7 +307,8 @@ def prepare():
 
 
 if __name__ == "__main__":
-    names = sys.argv[1:] or list(VARIANTS)
+    lossless = "--wav" in sys.argv
+    names = [a for a in sys.argv[1:] if a != "--wav"] or list(VARIANTS)
     S, K = prepare()
     for name in names:
-        print(f"  {name}: {render(name, VARIANTS[name], S, K)}")
+        print(f"  {name}: {render(name, VARIANTS[name], S, K, lossless)}")
