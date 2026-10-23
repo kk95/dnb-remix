@@ -26,6 +26,15 @@ from the second "Saathiya" and pulling out for the last bar → half-time drop A
 rehna" on the drop and once more) → antara 2 (bars 58-71), KG guitar fading under its start, KG drums
 creeping back from "teri baali" → 176 two-step drop B → 4s fade.
 
+### Mastering (applies to every render)
+
+- Reference: the Kho Gayi release (-9.8 LUFS, drops -9.4 / -7.7). Ours: -11.1 LUFS, drops -9.1 / -10.1,
+  true peak -1.1 dBTP, every octave within ~4 dB of Kho Gayi's drops.
+- Bass distortion splits at 250 Hz (was 80): tanh(6x) boosted 80-250 Hz ~14 dB, a boom 13 dB over the reference.
+- Saathiya's MP3 is mono (L/R correlation 1.00); a decorrelated stereo room on its parts gives width.
+- Hooks sit 4 dB down (HOOK_GAIN) so drops stay 4-6 dB above them.
+- `--wav` writes the 24-bit master; the release asset (tag `long-version`) is that file.
+
 ### Listening notes that still apply
 
 - Hooks must start at the top of a lyric line; check `lyrics.json` and the vocal stem's gaps.

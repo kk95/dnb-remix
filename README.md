@@ -102,6 +102,8 @@ The rest was nine rounds of the same loop as February:
 
 > "build-back is sickkk"
 
+Last came a mastering pass, the part I almost studied (I nearly minored in Sound Recording Technology). Measured against kSaya's own Kho Gayi release, our drops had 13 dB too much energy around 125 Hz. The February "medium distortion" was also a hidden bass boost: tanh saturation multiplies quiet signals by up to 6x, so saturating everything above 80 Hz pushed the bass body up ~14 dB. Moving the split to 250 Hz kept the grit and lost the boom. The Saathiya MP3 also turned out to be completely mono, so its parts got a short stereo room. Then a gentle EQ, light glue compression, and a true-peak limiter put the drops next to Kho Gayi's loudness at -1 dBTP.
+
 **The final track:** [Listen](https://kk95.github.io/dnb-remix/docs/)
 
 ## How Vibe Coding Works
@@ -159,7 +161,7 @@ Key techniques:
 - **Grid-locked arrangement**: Saathiya at native speed, Kho Gayi stretched once by 88/95 with Rubber Band's R3 engine
 - **176 BPM drum kit** ([dnb_kit.py](scripts/dnb_kit.py)): Kho Gayi's kick and snare averaged across a dozen hits to cancel bleed, synthesized hats
 - **Lyric timing**: [Whisper](https://github.com/ml-explore/mlx-examples/tree/main/whisper) word timestamps ([transcribe-lyrics.py](scripts/transcribe-lyrics.py)), cut points snapped to the gaps between words ([find-adlibs.py](scripts/find-adlibs.py))
-- **Mastering**: every render matched to -12 LUFS and limited, so A/B comparisons aren't biased by loudness
+- **Mastering**: tonal balance and loudness matched against the Kho Gayi release, EQ + glue compression, stereo room for the mono Saathiya source, 4x-oversampled limiter at -1 dBTP
 
 The [Gradio tuner](scripts/ding-tuner.py) (568 lines) provides an interactive UI for adjusting flute source, crossfade, volumes, and KG mode in real-time.
 
