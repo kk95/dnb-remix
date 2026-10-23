@@ -37,3 +37,6 @@ __pycache__/
 .claude/settings.local.json
 CLAUDE.local.md
 todos/
+
+# Per-repo lessons file
+.claude/lessons.md

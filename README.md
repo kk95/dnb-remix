@@ -4,13 +4,13 @@
 
 A Bollywood drum & bass remix: Saathiya's dreamy flute melody looped over Kho Gayi's drum break, beat-synced at 88 BPM (half-time DnB), with tanh bass distortion and a snap transition from vocals to drop.
 
-**34 scripts. 10,247 lines of code. 464 audio renders. 3 days. Zero DAW.**
+**37 scripts. 10,768 lines of code. 491 audio renders. 4 sittings, 8 months apart. Zero DAW.**
 
 ## The Final Track
 
-[**Listen in browser**](https://kk95.github.io/dnb-remix/docs/) | [Download MP3](samples/13-final-full-section.mp3)
+[**Listen in browser**](https://kk95.github.io/dnb-remix/docs/) | [Download the long version (2:57)](samples/17-final-long-version.mp3) | [The February version (1:17)](samples/13-final-full-section.mp3)
 
-Full-section KG drums (no loop restarts), 134ms circular crossfade on the flute, corrected stretch rate after discovering the post-drop BPM (95.0) differs from the global average (95.703). Built a [Gradio tuner](scripts/ding-tuner.py) to dial in the final mix interactively.
+Sonu Nigam opens with "teri ek hansi ke badle", Kho Gayi's drums tease in underneath and pull out so Saathiya's bassline leads into a half-time drop, where "hanste rehna" (keep laughing) lands. The antara gets room to breathe, builds back, and breaks into a 176 BPM two-step built from Kho Gayi's own kick and snare.
 
 ## The Spark
 
@@ -68,6 +68,40 @@ Built a [Gradio tuner](scripts/ding-tuner.py) for interactive parameter adjustme
 
 ![Gradio DnB Remix Tuner](docs/images/gradio-tuner.png)
 
+**The February track:** [Listen](samples/13-final-full-section.mp3)
+
+### Day 4: October 23 · The Long Version
+
+**One sitting. 9 listening rounds. 27 full-length renders.**
+
+Eight months later I came back with a newer Claude model and two wishes: a longer track, and some way to stitch both songs together instead of looping one riff over the other.
+
+The first thing it did was re-measure everything, and that changed the whole project. **Saathiya is locked at exactly 88.000 BPM for all five minutes.** The 87.6 we had been using was a beat tracker artifact, and so was Kho Gayi's 95.7: it's 95.0 in both of its drops. That meant the entire song could play at native speed against a straight grid, with no stretching and no looping. The flute had only seemed to last 10 seconds because we had been cutting at one spot. The songs also turned out to sit in neighbouring keys (B major and E major), which is the classic safe pairing for mixing.
+
+It also caught a sag in the February mix: the "full section" ran past Kho Gayi's first drop into its breakdown, so the hi-hats died out 20 seconds before the fade.
+
+Round 1 was six 3-minute versions with different drum and bass options. Two things stood out. Kho Gayi's own second build into its second drop sounded like the opening the song was missing ([hear it](samples/14-long-version-build-into-drop.mp3)). And because one bar at 88 is two bars at 176, the flute already fits real drum and bass tempo, so a two-step built from Kho Gayi's own kick and snare dropped right in ([hear it](samples/15-dnb-176-two-step.mp3)).
+
+> "v3 is gnarlyyy"
+
+Then I asked whether we had looked at the lyrics at all. We hadn't. "Hanste rehna" (keep laughing) landing on a drop had been luck. Whisper transcribed the isolated vocals with a timestamp for every word, which turned the song into phrases that could be placed on the beat. It also fixed a problem I kept hearing: the hook always started mid-word, on the tail end of "mera aasmaan le le".
+
+Getting "hanste rehna" itself right took three tries. I kept hearing a "hmm" before it, then the end of "madham". The singer runs "madham" straight into "hanste" without a breath, and the first two cuts started inside that hum. The pitch data looked fine both times. Only ears caught it ([the final cut](samples/16-hanste-rehna.mp3)).
+
+The rest was nine rounds of the same loop as February:
+
+> "The hook starts mid lyric" → every vocal section starts at the top of a line
+>
+> "Ek hansi starting feels so unique" → Sonu opens the track
+>
+> "No warning it changes into d&b" → Kho Gayi's drums tease in on the second "Saathiya", then pull out so the bassline leads into the drop alone
+>
+> "Kho Gayi abruptly stops for Sonu" → the guitar fades out under his first two bars instead
+>
+> "Maybe it's worth it to slow down for him?" → yes, but the antara builds back into the drop
+
+> "build-back is sickkk"
+
 **The final track:** [Listen](https://kk95.github.io/dnb-remix/docs/)
 
 ## How Vibe Coding Works
@@ -100,14 +134,19 @@ This project spanned multiple Claude Code sessions across 10 days. Two mechanism
 
 ## What's Under the Hood
 
-The final script ([flute-loop-drop.py](scripts/flute-loop-drop.py)) produces the remix:
+The long version comes from [long-remix.py](scripts/long-remix.py), which describes the arrangement as a list of sections:
 
 ```text
-0:00  Pure Saathiya — last vocal phrase before the drop
-0:08  KG builds in muffled (300 Hz low-pass filter)
-0:11  DROP — KG drums + bass snap to full, flute loop begins
-1:07  Fadeout
+0:00  Sonu opens: "teri ek hansi ke badle, meri ye zameen le le..." into the mukhda
+0:20  Kho Gayi's drop groove teases in, muffled, on the second "Saathiya"
+0:38  Drums pull out; Saathiya's bassline plays alone
+0:41  DROP A: Kho Gayi's second drop, half-time, "hanste rehna" on the downbeat
+1:24  Antara: "kabhi neele aasmaan pe...", Kho Gayi's guitar fading out underneath
+1:45  Build-back: Kho Gayi's drums creep in from "teri baali hil gayi hai"
+2:03  DROP B: 176 BPM two-step, rolling into a 4-second fade
 ```
+
+The February version still comes from [flute-loop-drop.py](scripts/flute-loop-drop.py).
 
 Key techniques:
 
@@ -117,6 +156,10 @@ Key techniques:
 - **Full-section KG drums** — 65s continuous, no looping
 - **Bass distortion** via tanh saturation with clean sub (<80 Hz) preservation
 - **Snap transition** — per-stem volume envelopes, instant cut at the downbeat
+- **Grid-locked arrangement**: Saathiya at native speed, Kho Gayi stretched once by 88/95 with Rubber Band's R3 engine
+- **176 BPM drum kit** ([dnb_kit.py](scripts/dnb_kit.py)): Kho Gayi's kick and snare averaged across a dozen hits to cancel bleed, synthesized hats
+- **Lyric timing**: [Whisper](https://github.com/ml-explore/mlx-examples/tree/main/whisper) word timestamps ([transcribe-lyrics.py](scripts/transcribe-lyrics.py)), cut points snapped to the gaps between words ([find-adlibs.py](scripts/find-adlibs.py))
+- **Mastering**: every render matched to -12 LUFS and limited, so A/B comparisons aren't biased by loudness
 
 The [Gradio tuner](scripts/ding-tuner.py) (568 lines) provides an interactive UI for adjusting flute source, crossfade, volumes, and KG mode in real-time.
 
@@ -129,8 +172,9 @@ The [Gradio tuner](scripts/ding-tuner.py) (568 lines) provides an interactive UI
 | Audio renders generated | 464 |
 | Analysis plots | 46 |
 | Approaches tried and abandoned | ~12 |
-| Active days | 3 (across 10 calendar days) |
-| Total hours | ~17 |
+| Active days | 4 (February, plus one sitting in October) |
+| Total hours | ~17 in February, one long sitting in October |
+| Listening rounds for the long version | 9 |
 | Key bugs found through listening | 4 |
 
 The 4 bugs only ears could catch:
@@ -159,10 +203,18 @@ samples/                              # Curated audio for this README
   10-bass-dist-medium.mp3             # Day 1: sweet spot
   11-bass-dist-heavy.mp3              # Day 1: too much
   12-final-dreamy-flute-dnb.mp3       # Day 1 final
-  13-final-full-section.mp3           # Day 3 final (the final track)
+  13-final-full-section.mp3           # Day 3 final (the February track)
+  14-long-version-build-into-drop.mp3 # Day 4: KG's second build into its second drop
+  15-dnb-176-two-step.mp3             # Day 4: the 176 two-step from KG's own kit
+  16-hanste-rehna.mp3                 # Day 4: the lyric cut it took three tries to get
+  17-final-long-version.mp3           # Day 4 final (the long version)
 
 scripts/
-  flute-loop-drop.py                  # Main remix script (full-section KG + flute loop)
+  long-remix.py                       # The long version: arrangement as a list of sections
+  dnb_kit.py                          # 176 BPM kit from KG's own kick and snare
+  transcribe-lyrics.py                # Whisper word timestamps for the Saathiya vocals
+  find-adlibs.py                      # Cut lyric phrases at the gaps between words
+  flute-loop-drop.py                  # February remix script (full-section KG + flute loop)
   ding-tuner.py                       # Gradio interactive tuner UI
   constant-stretch-drop.py            # The breakthrough: constant time-stretch
   beat-locked-drop.py                 # Abandoned: beat-to-beat warp (wobble)
@@ -179,6 +231,8 @@ HANDOFF.md                            # Session handoff document
 - **[Claude Code](https://docs.anthropic.com/en/docs/claude-code)** — all scripting, analysis, and audio engineering through conversation
 - **Python** — numpy, scipy, soundfile, librosa, pyrubberband, matplotlib, gradio
 - **[Demucs](https://github.com/facebookresearch/demucs)** (htdemucs_ft) — source separation
+- **[Rubber Band](https://breakfastquay.com/rubberband/)** R3 engine — time-stretching for the long version
+- **[MLX Whisper](https://github.com/ml-explore/mlx-examples/tree/main/whisper)** (large-v3-turbo) — lyric timestamps
 - **ffmpeg** — audio format conversion
 - **My ears** — quality control
 

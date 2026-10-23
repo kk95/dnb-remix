@@ -165,6 +165,15 @@
       h1 { font-size: 1.4rem; }
       .hero { padding: 1rem; }
     }
+
+    .moments { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+    .moments button {
+      font: inherit; font-size: 0.75rem; color: #c4b5fd; background: #1a1a2e;
+      border: 1px solid #2a2a4a; border-radius: 6px; padding: 0.2rem 0.55rem; cursor: pointer;
+    }
+    .moments button:hover { border-color: #7c5cfc; color: #fff; }
+    .note li { margin: 0.3rem 0 0 1.1rem; }
+    .quote { color: #a78bfa; font-style: italic; }
   </style>
 </head>
 <body>
@@ -174,6 +183,7 @@
     A Bollywood DnB remix built entirely through prompting with
     <a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank">Claude Code</a>.
     No DAW. No Python experience since 2014. Just ears and natural language.
+    Two sittings, eight months apart.
     <br><a href="https://github.com/kk95/dnb-remix">&larr; Back to repo</a>
   </p>
 
@@ -186,148 +196,134 @@
   </div>
 
   <div class="hero">
-    <h2>The Final Track</h2>
+    <h2>The Long Version</h2>
     <p>
-      Saathiya's flute melody looped over Kho Gayi's full drum section at 88 BPM.
-      Full-section KG drums (no loop restarts), 134ms circular crossfade, tanh bass distortion.
+      2:57. Sonu Nigam opens with "teri ek hansi ke badle", Kho Gayi's drums tease in underneath and pull
+      out so Saathiya's bassline leads into a half-time drop, where "hanste rehna" (keep laughing) lands.
+      The antara gets room to breathe, builds back, and breaks into a 176 BPM two-step.
     </p>
-    <audio controls preload="metadata">
-      <source src="../samples/13-final-full-section.mp3" type="audio/mpeg">
+    <audio id="final" controls preload="metadata">
+      <source src="../samples/17-final-long-version.mp3" type="audio/mpeg">
     </audio>
+    <div class="moments"><button onclick="seek(0)">Sonu opens 0:00</button><button onclick="seek(20.2)">Drums tease 0:20</button><button onclick="seek(38.2)">Bassline pause 0:38</button><button onclick="seek(40.9)">Drop A 0:40</button><button onclick="seek(84.5)">Antara 1:24</button><button onclick="seek(104.9)">Build-back 1:44</button><button onclick="seek(122.7)">176 drop 2:02</button><button onclick="seek(173.3)">Fade 2:53</button></div>
   </div>
 
   <div class="day">
-    <h3 class="day-header">Day 1: February 5 — The Marathon</h3>
-    <p class="day-meta">2 AM &rarr; 4:30 PM &middot; 14 hours &middot; 437 output files</p>
-
-    <div class="track">
-      <div class="track-title">Early Transition Attempt</div>
-      <div class="track-desc">First programmatic recreation of the djay transition. Beat alignment is rough — tempos fighting each other.</div>
-      <audio controls preload="none">
-        <source src="../samples/01-early-transition-attempt.mp3" type="audio/mpeg">
-      </audio>
-    </div>
+    <h3 class="day-header">Part 1: February &middot; Finding the Drop</h3>
+    <p class="day-meta">3 sittings &middot; ~17 hours &middot; 464 renders &middot; the moments that changed everything</p>
 
     <div class="track">
       <div class="track-title">Beat-Warped Wobble <span class="badge badge-problem">Problem</span></div>
-      <div class="track-desc">Each beat individually time-mapped. Creates audible speed fluctuations — like someone tapping the tempo button.</div>
+      <div class="track-desc">Each beat individually time-mapped. Audible speed fluctuations, like someone tapping the tempo button.</div>
       <audio controls preload="none">
         <source src="../samples/02-beat-warped-wobble.mp3" type="audio/mpeg">
       </audio>
     </div>
 
-    <div class="track">
-      <div class="track-title">Beat-Locked Drop</div>
-      <div class="track-desc">Improved alignment, but beat detection errors still cause micro-timing shifts.</div>
-      <audio controls preload="none">
-        <source src="../samples/03-beat-locked-drop.mp3" type="audio/mpeg">
-      </audio>
-    </div>
-
     <div class="track highlight">
       <div class="track-title">Constant Stretch <span class="badge badge-breakthrough">Breakthrough</span></div>
-      <div class="track-desc">5 AM. One constant time-stretch at 88/95.7 = 0.9195. Night and day difference. No wobble. The foundation.</div>
+      <div class="track-desc">5 AM. One constant time-stretch instead of beat-by-beat warping, the way DJ software does it. No wobble. The foundation.</div>
       <audio controls preload="none">
         <source src="../samples/04-constant-stretch-breakthrough.mp3" type="audio/mpeg">
       </audio>
     </div>
 
-    <div class="track">
-      <div class="track-title">Refined Spotify-Style</div>
-      <div class="track-desc">Smooth crossfade like Spotify/djay would do it. Drop timing is closer, but transition still feels... late.</div>
-      <audio controls preload="none">
-        <source src="../samples/05-refined-spotify-style.mp3" type="audio/mpeg">
-      </audio>
-    </div>
-
     <div class="track highlight">
-      <div class="track-title">First Looped Drop <span class="badge badge-breakthrough">Snap</span></div>
-      <div class="track-desc">All Saathiya stems cut to zero at the downbeat. KG enters at full volume instantly. No more "late" feeling.</div>
+      <div class="track-title">The Snap <span class="badge badge-breakthrough">Breakthrough</span></div>
+      <div class="track-desc">The drop always felt late. Cutting every Saathiya stem to zero on the downbeat and bringing Kho Gayi in at full volume fixed it.</div>
       <audio controls preload="none">
         <source src="../samples/06-first-looped-drop.mp3" type="audio/mpeg">
       </audio>
     </div>
 
     <div class="track">
-      <div class="track-title">Flute Loop — 2-Bar</div>
-      <div class="track-desc">Too short. The riff feels like it's on repeat immediately.</div>
-      <audio controls preload="none">
-        <source src="../samples/07-flute-loop-2bar.mp3" type="audio/mpeg">
-      </audio>
-    </div>
-
-    <div class="track">
-      <div class="track-title">Flute Loop — 4-Bar</div>
-      <div class="track-desc">Full phrase. Bars 1-2 are the main riff, bars 3-4 have a melodic variation. Much more natural.</div>
+      <div class="track-title">4-Bar Flute Loop</div>
+      <div class="track-desc">Two bars felt like a skipping record. Four bars kept the whole phrase, and the phrase is the hook.</div>
       <audio controls preload="none">
         <source src="../samples/08-flute-loop-4bar.mp3" type="audio/mpeg">
       </audio>
     </div>
 
     <div class="track">
-      <div class="track-title">Bass Distortion — Light</div>
-      <div class="track-desc">Subtle warmth. Almost too clean.</div>
-      <audio controls preload="none">
-        <source src="../samples/09-bass-dist-light.mp3" type="audio/mpeg">
-      </audio>
-    </div>
-
-    <div class="track">
-      <div class="track-title">Bass Distortion — Medium</div>
-      <div class="track-desc">The sweet spot. Grit on the mids, clean sub preserved.</div>
+      <div class="track-title">Bass Distortion, Medium</div>
+      <div class="track-desc">Tanh saturation on the mids, clean sub underneath. The sweet spot between too clean and too aggressive.</div>
       <audio controls preload="none">
         <source src="../samples/10-bass-dist-medium.mp3" type="audio/mpeg">
       </audio>
     </div>
 
-    <div class="track">
-      <div class="track-title">Bass Distortion — Heavy</div>
-      <div class="track-desc">Too aggressive. Overpowers the flute.</div>
-      <audio controls preload="none">
-        <source src="../samples/11-bass-dist-heavy.mp3" type="audio/mpeg">
-      </audio>
-    </div>
-
     <div class="track highlight">
-      <div class="track-title">Day 1 Final <span class="badge badge-final">End of Day</span></div>
-      <div class="track-desc">Where I left off after the marathon. 4-bar KG drum loop, flute at 290.4s, medium bass distortion.</div>
+      <div class="track-title">Zero Drum Restarts <span class="badge badge-final">Feb Final</span></div>
+      <div class="track-desc">A 4-bar drum loop restarted every 11 seconds. Kho Gayi's continuous drop section removed the start-stop feel, and showed its real tempo was 95.0, not 95.7.</div>
       <audio controls preload="none">
-        <source src="../samples/12-final-dreamy-flute-dnb.mp3" type="audio/mpeg">
-      </audio>
-    </div>
-  </div>
-
-  <div class="day">
-    <h3 class="day-header">Day 2: February 7 — Midnight Flute Hunt</h3>
-    <p class="day-meta">12 AM &rarr; 1 AM &middot; 1 hour &middot; Pure R&amp;D, no full render</p>
-    <div class="track">
-      <div class="track-title" style="color: #777; font-style: italic;">Exploration session</div>
-      <div class="track-desc">
-        Tested 5 flute source positions across the song. Experimented with crossfade durations
-        (500ms, 681ms, 1362ms, 2727ms). Found that 290.4s is the best loop boundary.
-        No full remix rendered — just isolated loop tests.
-      </div>
-    </div>
-  </div>
-
-  <div class="day">
-    <h3 class="day-header">Day 3: February 14 — Zero Drum Restarts</h3>
-    <p class="day-meta">7 AM &rarr; 9 AM &middot; 2 hours &middot; Architecture fix</p>
-
-    <div class="track highlight">
-      <div class="track-title">Final Track <span class="badge badge-final">Final</span></div>
-      <div class="track-desc">
-        Full continuous KG drum section (no more 4-bar loop restarts). Corrected stretch rate
-        from 88/95.703 to 88/95.0 after discovering local BPM differs from global. 134ms circular
-        crossfade on flute, volume dialed back to 0.57.
-      </div>
-      <audio controls preload="metadata">
         <source src="../samples/13-final-full-section.mp3" type="audio/mpeg">
       </audio>
     </div>
+
+  </div>
+
+  <div class="day">
+    <h3 class="day-header">Part 2: October &middot; Same Ears, Newer Model</h3>
+    <p class="day-meta">1 sitting &middot; 9 listening rounds &middot; 27 full-length renders &middot; 4 new scripts</p>
+
+    <div class="track">
+      <div class="track-title">Re-measuring everything</div>
+      <div class="track-desc note">The 1:17 length was a constraint, not a choice: the flute had to loop because there seemed to be only 10 seconds of it. Re-measuring both songs with a newer Claude model showed Saathiya is locked at exactly 88.000 BPM for all five minutes, in a key one step from Kho Gayi's (B major next to E major). So the whole song could play at native speed with no stretching and no looping. Kho Gayi also had a second drop that was never used.</div>
+    </div>
+
+    <div class="track highlight">
+      <div class="track-title">The First Long Version <span class="badge badge-breakthrough">Breakthrough</span></div>
+      <div class="track-desc">Round 1. Kho Gayi's own second build under Saathiya's flute interludes, into its second drop. It came out in the middle of the track and sounded like the opening the song was missing.</div>
+      <audio controls preload="none">
+        <source src="../samples/14-long-version-build-into-drop.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track highlight">
+      <div class="track-title">Real DnB Tempo <span class="badge badge-breakthrough">Breakthrough</span></div>
+      <div class="track-desc">At 88 BPM one bar is two bars at 176, so the flute already fits drum and bass tempo. A two-step built from Kho Gayi's own kick and snare, with its hi-hats on top. <span class="quote">"v3 is gnarlyyy"</span></div>
+      <audio controls preload="none">
+        <source src="../samples/15-dnb-176-two-step.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track highlight">
+      <div class="track-title">Reading the Lyrics <span class="badge badge-breakthrough">Breakthrough</span></div>
+      <div class="track-desc">Whisper transcribed the vocal stem with a timestamp for every word, which turned the song into phrases that land on the beat. "Hanste rehna" means "keep laughing". Getting this cut right took three tries: the first two started inside the hum at the end of "madham", and only ears caught it.</div>
+      <audio controls preload="none">
+        <source src="../samples/16-hanste-rehna.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
+    <div class="track">
+      <div class="track-title">Nine rounds of listening</div>
+      <div class="track-desc note">Every round was the same loop as February: listen, describe, render. The notes that shaped the final arrangement:<ul><li>"The hook starts mid lyric" &rarr; every vocal section now starts at the top of a line</li><li>"Build 2 sounds like a great beginning", then "ek hansi starting feels so unique" &rarr; Sonu opens the track</li><li>"No warning it changes into d&amp;b" &rarr; Kho Gayi's drums tease in on the second "Saathiya" and pause for the bassline</li><li>"Kho Gayi abruptly stops for Sonu" &rarr; the guitar fades out under his first two bars</li><li>"Is it worth it to slow down for him?" &rarr; yes, but the antara builds back into the drop <span class="quote">"build-back is sickkk"</span></li></ul></div>
+    </div>
+
+    <div class="track highlight">
+      <div class="track-title">The Long Version <span class="badge badge-final">Final</span></div>
+      <div class="track-desc">Round 9. Sonu opens, half-time drop A, the antara, then the 176 drop into the fade.</div>
+      <audio controls preload="none">
+        <source src="../samples/17-final-long-version.mp3" type="audio/mpeg">
+      </audio>
+    </div>
+
   </div>
 
   <a class="back-link" href="https://github.com/kk95/dnb-remix">&larr; Back to repository</a>
+
+  <script>
+    function seek(t) {
+      document.querySelectorAll('audio').forEach(a => a.pause());
+      const a = document.getElementById('final');
+      a.currentTime = t;
+      a.play();
+    }
+    // one player at a time
+    document.addEventListener('play', e => document.querySelectorAll('audio').forEach(a => {
+      if (a !== e.target) a.pause();
+    }), true);
+  </script>
 
 </body>
 </html>
