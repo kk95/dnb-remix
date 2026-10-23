@@ -82,7 +82,7 @@ VARIANTS = {
                desc="Muffled drop A groove from the second \"Saathiya\", bassline alone into drop A."),
 }
 PATTERN = "twostep"
-SIDECHAIN = 0.35
+SIDECHAIN = 0.25
 
 
 def load(song, stem):
@@ -197,7 +197,8 @@ def drop(buses, K, kind, kg_drop, segments, dst_bar):
             place(buses["drums"], K["drums"], kg_bar(kg_drop, m), pos, bars, G["kg_drums"], xf=0.01)
         else:
             place(buses["drums"], K["drums_top"], kg_bar(kg_drop, m), pos, bars, 0.55, xf=0.01)
-        place(buses["bass"], K["bass"], kg_bar(kg_drop, m), pos, bars, G["kg_bass"], xf=0.01)
+        bass = K["bass"] if kind == "half" else K["bass_176"]
+        place(buses["bass"], bass, kg_bar(kg_drop, m), pos, bars, G["kg_bass"], xf=0.01)
         place(buses["ding"], K["ding"], kg_bar(kg_drop, m), pos, bars, G["ding"], xf=0.01)
         pos += bars
     ramp(buses["ding"], dst_bar, 8, 0.0, 1.0)
@@ -323,6 +324,9 @@ def prepare():
     K["ding"] = filt(K["other"], "high", 1500)
     K["drums_top"] = filt(K["drums"], "high", 6000)
     K["bass"] = distort(K["bass"], 6)
+    # The 176 drop has a kick only every other beat, so its bass carries the weight:
+    # a zero-phase +4 dB bell at 55-110 Hz (the boom lived higher, at 120-250 Hz)
+    K["bass_176"] = K["bass"] + 0.6 * filt(filt(K["bass"], "high", 55), "low", 110)
     K["kit"] = kit.build_kit(load("kho-gayi", "drums"), KG_DROP1)
     # 1.2 s decaying noise, independent per side, 20 ms pre-delay, 300 Hz-8 kHz
     t = np.arange(int(1.2 * SR)) / SR

@@ -16,6 +16,7 @@ KG_SIXTEENTH = 60 / 95.0 / 4
 KG_CELL = 8 * KG_SIXTEENTH
 
 LEVEL = dict(kick=0.85, snare=0.80, hat=0.30, open=0.22)
+BODY = 0.75                         # kick body level, relative to the sampled kick's peak
 
 PATTERNS = {
     # step: velocity, per 176 bar (16 steps). Kick on 1 and the "and" of 3.
@@ -56,11 +57,16 @@ def _noise_hit(decay, lo, seed=0):
 def build_kit(kg_drums_raw, drop_s, cells=12):
     mono = kg_drums_raw.mean(axis=1)
     starts = drop_s + KG_CELL * np.arange(cells)
-    kick = _onset_aligned(mono, starts + KG_SIXTEENTH, int(0.150 * SR))
+    kick = _onset_aligned(mono, starts + KG_SIXTEENTH, int(0.180 * SR))
     snare = _onset_aligned(mono, starts + 2 * KG_SIXTEENTH, int(0.220 * SR))
     # The kick before each snare rings into it; keep only the snare's body
     snare = sosfilt(butter(2, 150, btype="high", fs=SR, output="sos"), snare)
     peak = np.abs(kick).max()
+    # KG's kick is mostly click above 120 Hz; a sine body falling 110 -> 50 Hz gives it
+    # the 60-120 Hz weight a 176 drop needs (the half-time drop gets it from KG's dense kicks)
+    t = np.arange(len(kick)) / SR
+    freq = 50 + 60 * np.exp(-t / 0.03)
+    kick = kick + np.sin(2 * np.pi * np.cumsum(freq) / SR) * np.exp(-t / 0.035) * peak * BODY
     return dict(kick=_tail_fade(kick), snare=_tail_fade(snare),
                 hat=_noise_hit(0.012, 8000) * peak, open=_noise_hit(0.07, 7000, seed=1) * peak)
 
