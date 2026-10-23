@@ -8,7 +8,7 @@ A Bollywood drum & bass remix: Saathiya's dreamy flute melody looped over Kho Ga
 
 ## The Final Track
 
-[**Listen in browser**](https://kk95.github.io/dnb-remix/docs/) | [Download the long version (2:57)](samples/17-final-long-version.mp3) | [The February version (1:17)](samples/13-final-full-section.mp3)
+[**Listen in browser**](https://kk95.github.io/dnb-remix/docs/) | [Download the long version (2:57)](samples/17-final-long-version.mp3) ([lossless WAV](https://github.com/kk95/dnb-remix/releases/download/long-version/saathiya-x-kho-gayi-long-version.wav)) | [The February version (1:17)](samples/13-final-full-section.mp3)
 
 Sonu Nigam opens with "teri ek hansi ke badle", Kho Gayi's drums tease in underneath and pull out so Saathiya's bassline leads into a half-time drop, where "hanste rehna" lands. The antara gets room to breathe, builds back, and breaks into a 176 BPM two-step built from Kho Gayi's own kick and snare.
 
