@@ -33,7 +33,7 @@ import subprocess
 import numpy as np
 import soundfile as sf
 import pyloudnorm as pyln
-from scipy.signal import butter, sosfilt, sosfiltfilt
+from scipy.signal import butter, oaconvolve, sosfilt, sosfiltfilt
 
 import dnb_kit as kit
 
@@ -47,7 +47,10 @@ BAR = 4 * 60 / BPM
 S_BAR0 = 306.772 - 112 * BAR
 KG_TIME_RATIO = 95.0 / BPM          # stretched KG is this many times longer
 KG_DROP1, KG_DROP2 = 33.245, 140.061
-TARGET_LUFS = -12.0                 # same loudness for every variant, so A/B is fair
+TARGET_LUFS = -10.0                 # drops land near Kho Gayi's own (-9.4 / -7.7 LUFS)
+# Hooks sit 4 dB down: once the bass boom was gone the drops lost the loudness it had been
+# faking, and the hooks ended up almost level with them
+HOOK_GAIN = 10 ** (-4 / 20)
 
 # Mix levels carried over from the approved Day 3 mix
 G = dict(s_vox=0.85, s_other=0.70, s_drums=0.40, s_bass=0.50,
@@ -158,19 +161,21 @@ def filt(x, kind, hz):
     return sosfiltfilt(butter(4, hz, btype=kind, fs=SR, output="sos"), x, axis=0)
 
 
-def distort(x, drive):
-    """Tanh saturation above 80 Hz, clean sub below (Day 1 recipe)."""
-    if drive <= 0:
-        return x
-    lo = sosfilt(butter(4, 80, btype="low", fs=SR, output="sos"), x, axis=0)
-    hi = sosfilt(butter(4, 80, btype="high", fs=SR, output="sos"), x, axis=0)
+def distort(x, drive, split=250):
+    """Tanh saturation above `split` Hz, clean below (Day 1 recipe, crossover moved up).
+
+    tanh(6x) is ~6x gain on quiet signals, so saturating from 80 Hz (the Day 1 split)
+    also boosted 80-250 Hz by ~14 dB: a boom 13 dB over Kho Gayi's own balance.
+    Splitting at 250 Hz keeps the grit and leaves the bass body at its real level.
+    """
+    lo = sosfilt(butter(4, split, btype="low", fs=SR, output="sos"), x, axis=0)
+    hi = sosfilt(butter(4, split, btype="high", fs=SR, output="sos"), x, axis=0)
     return lo + np.tanh(drive * hi) / np.tanh(drive)
 
 
-def instruments(buses, S, src_bar, dst_bar, bars, drums=False):
-    stems = [("other", "s_other"), ("bass", "s_bass")] + ([("drums", "s_drums")] if drums else [])
-    for stem, key in stems:
-        place(buses["sat"], S[stem], s_bar(src_bar), dst_bar, bars, G[key])
+def instruments(buses, S, src_bar, dst_bar, bars, gain=1.0):
+    for stem, key in [("other", "s_other"), ("bass", "s_bass")]:
+        place(buses["sat"], S[stem], s_bar(src_bar), dst_bar, bars, G[key] * gain)
 
 
 def sweep(bus, bar0, bars, cutoffs=(6000, 3000, 1500, 800, 400, 250)):
@@ -224,8 +229,8 @@ def hook(buses, S, K, bar, name, drums=None):
     """drums: None, "creep" or "teaser" (KG drums only: KG bass would fight
     Saathiya's bassline under a hook)."""
     (b0, b1), (t0, t1) = HOOKS[name]["bars"], HOOKS[name]["vocal"]
-    instruments(buses, S, b0, bar, b1 - b0)
-    put_line(buses["vox"], S["vocals"], t0, t1, b0, bar, G["s_vox"])
+    instruments(buses, S, b0, bar, b1 - b0, HOOK_GAIN)
+    put_line(buses["vox"], S["vocals"], t0, t1, b0, bar, G["s_vox"] * HOOK_GAIN)
     end = bar + b1 - b0
     kg = np.zeros_like(buses["build"])
     if drums == "creep":
@@ -272,6 +277,10 @@ def render(name, v, S, K, lossless=False):
     duck = np.where(ducked, kit.sidechain(buses["drums"], SIDECHAIN), 1.0)
     for b in ["bass", "flute", "ding"]:
         buses[b] *= duck[:, None]
+    # Saathiya's MP3 is mono, so give its parts a stereo room: a short reverb with
+    # different reflections left and right (sums back to mono without phasing)
+    saathiya = buses["sat"] + buses["flute"] + buses["vox"]
+    buses["room"] = oaconvolve(saathiya, K["room_ir"], axes=0)[:n] * 0.25
     mix = sum(buses.values())[:at(bar)]
     n_fade = int(OUTRO_FADE_S * SR)
     mix[-n_fade:] *= np.linspace(1, 0, n_fade)[:, None]
@@ -281,12 +290,24 @@ def render(name, v, S, K, lossless=False):
 
 
 def master(mix, name, lossless=False):
+    """EQ + glue, loudness to TARGET_LUFS, then a true-peak limiter at -1 dBTP."""
     meter = pyln.Meter(SR)
-    mix = mix * 10 ** ((TARGET_LUFS - meter.integrated_loudness(mix)) / 20)
-    raw, mp3 = f"{OUT}/{name}-raw.wav", f"{OUT}/{name}.mp3"
+    raw, glued, mp3 = f"{OUT}/{name}-raw.wav", f"{OUT}/{name}-glued.wav", f"{OUT}/{name}.mp3"
+    mix = mix * 10 ** ((-16 - meter.integrated_loudness(mix)) / 20)    # headroom for the chain
     sf.write(raw, mix.astype(np.float32), SR, subtype="FLOAT")
-    # Brickwall at -1 dBFS: the old mix only peak-normalized, so its drops sat at -14.8 LUFS
-    limiter = ["-af", "alimiter=limit=0.891:attack=3:release=60:level=disabled"]
+    # Half the gap to Kho Gayi's tonal balance after the bass fix: thin at 500 Hz, dull at 4 kHz.
+    # Then light glue compression so the 2002 and 2023 recordings sit together.
+    chain = ("equalizer=f=450:t=q:w=0.8:g=2.5,equalizer=f=3800:t=q:w=1.0:g=2,"
+             "acompressor=threshold=-18dB:ratio=1.3:attack=25:release=250:knee=6")
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", raw, "-af", chain,
+                    "-c:a", "pcm_f32le", glued], check=True)
+    mix, _ = sf.read(glued)
+    mix = mix * 10 ** ((TARGET_LUFS - meter.integrated_loudness(mix)) / 20)
+    sf.write(raw, mix.astype(np.float32), SR, subtype="FLOAT")
+    os.remove(glued)
+    # Limit at 4x the sample rate so peaks between samples are caught too (true peak)
+    limiter = ["-af", "aresample=176400,alimiter=limit=0.85:attack=2:release=80:level=disabled,"
+                      "aresample=44100"]
     outputs = [["-codec:a", "libmp3lame", "-b:a", "320k", mp3]]
     if lossless:                # 44.1 kHz is the stems' rate, so 24-bit is the only upgrade left
         outputs.append(["-codec:a", "pcm_s24le", f"{OUT}/{name}-master.wav"])
@@ -303,6 +324,11 @@ def prepare():
     K["drums_top"] = filt(K["drums"], "high", 6000)
     K["bass"] = distort(K["bass"], 6)
     K["kit"] = kit.build_kit(load("kho-gayi", "drums"), KG_DROP1)
+    # 1.2 s decaying noise, independent per side, 20 ms pre-delay, 300 Hz-8 kHz
+    t = np.arange(int(1.2 * SR)) / SR
+    ir = np.random.default_rng(7).standard_normal((len(t), 2)) * np.exp(-t / 0.25)[:, None]
+    ir = filt(filt(ir, "high", 300), "low", 8000)
+    K["room_ir"] = np.vstack([np.zeros((int(0.02 * SR), 2)), ir / np.sqrt(np.sum(ir ** 2, axis=0))])
     return S, K
 
 
