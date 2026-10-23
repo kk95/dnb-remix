@@ -77,9 +77,10 @@ GULP_FROM = {                       # Saathiya time where KG's drums jump in und
 OUTRO_FADE_S = 4.0                  # same fade length as the published mix
 
 VARIANTS = {
-    "r9": dict(sections=[("hook", "ek-hansi", "teaser"), ("drop_a", [(102, 12), (106, 4)]),
-                         ("hook", "antara-2", "creep"), ("drop_b", [(72, 4), (8, 8), (106, 8)])],
-               desc="Muffled drop A groove from the second \"Saathiya\", bassline alone into drop A."),
+    "r9": dict(sections=[("hook", "ek-hansi", "teaser"), ("drop_a", [(102, 12), (106, 4)], "feb"),
+                         ("hook", "antara-2", "creep"), ("drop_b", [(72, 4), (8, 8), (106, 8)], "feb")],
+               desc="Muffled drop A groove from the second \"Saathiya\", bassline alone into drop A, "
+                    "February ding hitting on both drops."),
 }
 PATTERN = "twostep"
 SIDECHAIN = 0.25
@@ -189,8 +190,12 @@ def sweep(bus, bar0, bars, cutoffs=(6000, 3000, 1500, 800, 400, 250)):
     bus[a:b] = sum(v * np.clip(1 - np.abs(pos - i), 0, 1)[:, None] for i, v in enumerate(versions))
 
 
-def drop(buses, K, kind, kg_drop, segments, dst_bar):
-    """Drums + bass + ding for one drop. segments = [(kg_bar_from, bars), ...]."""
+def drop(buses, K, kind, kg_drop, segments, dst_bar, ding="fade"):
+    """Drums + bass + ding for one drop. segments = [(kg_bar_from, bars), ...].
+
+    ding="fade": this drop's own KG synth part, faded in over 8 bars.
+    ding="feb": KG drop 1's synth part (the February ding) at full level from the downbeat.
+    """
     pos = dst_bar
     for m, bars in segments:
         if kind == "half":
@@ -199,9 +204,12 @@ def drop(buses, K, kind, kg_drop, segments, dst_bar):
             place(buses["drums"], K["drums_top"], kg_bar(kg_drop, m), pos, bars, 0.55, xf=0.01)
         bass = K["bass"] if kind == "half" else K["bass_176"]
         place(buses["bass"], bass, kg_bar(kg_drop, m), pos, bars, G["kg_bass"], xf=0.01)
-        place(buses["ding"], K["ding"], kg_bar(kg_drop, m), pos, bars, G["ding"], xf=0.01)
+        # At 0.30 the February ding sits ~13 dB under KG's hats here; +4 dB lets it read on the drop
+        ding_drop, ding_gain = (KG_DROP1, G["ding"] * 1.6) if ding == "feb" else (kg_drop, G["ding"])
+        place(buses["ding"], K["ding"], kg_bar(ding_drop, m), pos, bars, ding_gain, xf=0.01)
         pos += bars
-    ramp(buses["ding"], dst_bar, 8, 0.0, 1.0)
+    if ding == "fade":
+        ramp(buses["ding"], dst_bar, 8, 0.0, 1.0)
     if kind == "176":
         kit.render_hits(buses["drums"], kit.pattern_hits(PATTERN, dst_bar, pos - dst_bar, BAR), K["kit"])
     return pos
@@ -213,8 +221,8 @@ def flute(buses, S, plan, bar):
         bar += n
 
 
-def drop_a(buses, S, K, bar, plan):
-    end = drop(buses, K, "half", KG_DROP2, [(0, 8), (0, 8)], bar)
+def drop_a(buses, S, K, bar, plan, ding="fade"):
+    end = drop(buses, K, "half", KG_DROP2, [(0, 8), (0, 8)], bar, ding)
     flute(buses, S, plan, bar)
     for land in [bar, bar + 12]:
         adlib(buses["vox"], S, "hanste-rehna", land)
@@ -255,9 +263,9 @@ def hook(buses, S, K, bar, name, drums=None):
     return end
 
 
-def drop_b(buses, S, K, bar, plan):
+def drop_b(buses, S, K, bar, plan, ding="fade"):
     """The closing 176 drop. KG drop 1 bars 0-11, 4-7 (no second crash), 8-11."""
-    end = drop(buses, K, "176", KG_DROP1, [(0, 12), (4, 4), (8, 4)], bar)
+    end = drop(buses, K, "176", KG_DROP1, [(0, 12), (4, 4), (8, 4)], bar, ding)
     flute(buses, S, plan, bar)
     adlib(buses["vox"], S, "hanste-rehna", end - 2)
     return end
